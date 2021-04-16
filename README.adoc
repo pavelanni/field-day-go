@@ -1,0 +1,5 @@
+This is a reimplementation of my earlier registration application for ARRL Field Day which was written in Django.
+This one is written in Go.
+
+NOTE: check the Wails framework to package the app in a single binary. https://wails.app
+
