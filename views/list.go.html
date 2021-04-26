@@ -1,0 +1,20 @@
+{{define "yield"}}
+<h1>List of visitors</h1>
+
+<table border=1>
+    <tr>
+        <th>Name</th>
+        <th>Callsign</th>
+        <th>First time</th>
+        <th>NFARL member</th>
+    </tr>
+    {{range .}}
+    <tr>
+        <td>{{.Name}}</td>
+        <td>{{.Callsign}}</td>
+        <td>{{.FirstTime}}</td>
+        <td>{{.Nfarl}}</td>
+    </tr>
+    {{end}}
+</table>
+{{end}}
