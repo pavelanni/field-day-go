@@ -1,6 +1,7 @@
 package main
 
 import (
+	"field-day/controllers"
 	"field-day/views"
 	"net/http"
 
@@ -19,7 +20,6 @@ var (
 	contactView  *views.View
 	listView     *views.View
 	notfoundView *views.View
-	signupView   *views.View
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -32,10 +32,6 @@ func contact(w http.ResponseWriter, r *http.Request) {
 	must(contactView.Render(w, nil))
 }
 
-func signup(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(signupView.Render(w, nil))
-}
 func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	must(notfoundView.Render(w, nil))
@@ -57,22 +53,17 @@ func must(err error) {
 }
 
 func main() {
-	homeView = views.NewView("bootstrap",
-		"views/home.go.html")
-	contactView = views.NewView("bootstrap",
-		"views/contact.go.html")
-	notfoundView = views.NewView("bootstrap",
-		"views/notfound.go.html")
-	listView = views.NewView("bootstrap",
-		"views/list.go.html")
-	signupView = views.NewView("bootstrap",
-		"views/new.go.html")
+	staticC := controllers.NewStatic()
+	notfoundView = views.NewView("bootstrap", "static/notfound")
+	listView = views.NewView("bootstrap", "list")
+	usersC := controllers.NewUsers()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", home)
-	r.HandleFunc("/list", list)
-	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/new", signup)
+	r.HandleFunc("/list", list).Methods("GET")
+	r.Handle("/", staticC.Home).Methods("GET")
+	r.Handle("/contact", staticC.Contact).Methods("GET")
+	r.HandleFunc("/new", usersC.New).Methods("GET")
+	r.HandleFunc("/new", usersC.Create).Methods("POST")
 	r.NotFoundHandler = http.HandlerFunc(notFound)
 	http.ListenAndServe(":3000", r)
 }
