@@ -1,12 +1,12 @@
 {{define "yield"}}
 <div class="row">
-    <div class="col-md-4 offset-md-4">
-        <div class="card border-primary mb-3">
-            <div class="card-body text-primary">
-                <h4 class="card-title">New visitor</h4>
-                {{template "signupForm"}}
-            </div>
-        </div>
+    <div class="col-md-8">
+        <h4>Field Day 2021 Map</h4>
+        <img src="/static/FD_location2019.png">
+    </div>
+    <div class="col-md-4">
+        <h4>New visitor</h4>
+        {{template "signupForm"}}
     </div>
 </div>
 {{end}}
@@ -29,21 +29,21 @@
         <label for="email">Email address</label>
         <input type="email" name="email" class="form-control" id="email" placeholder="Email">
     </div>
-    <div class="checkbox">
-        <label for="nfarl">NFARL member?</label>
-        <input type="checkbox" name="nfarl" class="form-control" id="nfarl">
+    <div class="form-group form-check">
+        <input type="checkbox" name="nfarl" class="form-check-input" id="nfarl">
+        <label class="form-check-label" for="nfarl">NFARL member?</label>
     </div>
-    <div class="checkbox">
-        <label for="contactme">May we contact you?</label>
-        <input type="checkbox" name="nfarl" class="form-control" id="contactme">
+    <div class="form-group form-check">
+        <input type="checkbox" name="nfarl" class="form-check-input" id="contactme">
+        <label class="form-check-label" for="contactme">May we contact you?</label>
     </div>
-    <div class="checkbox">
-        <label for="youth">Younger than 18?</label>
-        <input type="checkbox" name="youth" class="form-control" id="youth">
+    <div class="form-group form-check">
+        <input type="checkbox" name="youth" class="form-check-input" id="youth">
+        <label class="form-check-label" for="youth">Younger than 18?</label>
     </div>
-    <div class="checkbox">
-        <label for="firsttime">First time at Field Day?</label>
-        <input type="checkbox" name="firsttime" class="form-control" id="firsttime">
+    <div class="form-group form-check">
+        <input type="checkbox" name="firsttime" class="form-check-input" id="firsttime">
+        <label class="form-check-label" for="firsttime">First time at Field Day?</label>
     </div>
     <button type="submit" class="btn btn-primary">
         Submit

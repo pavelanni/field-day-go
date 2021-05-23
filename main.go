@@ -35,6 +35,8 @@ func main() {
 	}
 	us.AutoMigrate()
 
+	staticDir := "/static"
+
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
 
@@ -43,5 +45,7 @@ func main() {
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.HandleFunc("/new", usersC.New).Methods("GET")
 	r.HandleFunc("/new", usersC.Create).Methods("POST")
+	r.PathPrefix(staticDir).
+		Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 	http.ListenAndServe(":3000", r)
 }
