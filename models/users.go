@@ -16,10 +16,28 @@ var (
 	ErrInvalidID = errors.New("models: ID provided was invalid")
 )
 
+/*
+   fields = ('first_name',
+             'last_name',
+             'call_sign',
+             'nfarl_member',
+             'contact_me',
+             'email',
+             'first_time',
+             'younger_than_18',
+             )
+*/
+
 type User struct {
 	gorm.Model
-	Name  string
-	Email string `gorm:"not null;unique_index"`
+	FirstName string
+	LastName  string
+	Callsign  string
+	Email     string
+	Nfarl     bool
+	Contactme bool
+	Firsttime bool
+	Youth     bool
 }
 
 type UserService struct {

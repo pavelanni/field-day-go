@@ -34,15 +34,15 @@ func main() {
 	us.DestructiveReset()
 
 	user := models.User{
-		Name:  "Michael Zhabitsky",
-		Email: "jabitsky@mail.ru",
+		FirstName: "Michael Zhabitsky",
+		Email:     "jabitsky@mail.ru",
 	}
 
 	if err = us.Create(&user); err != nil {
 		panic(err)
 	}
 
-	user.Name = "Updated Name"
+	user.FirstName = "Updated Name"
 	if err := us.Update(&user); err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(foundUser.Name)
+	fmt.Println(foundUser.FirstName)
 
 	if err := us.Delete(foundUser.ID); err != nil {
 		panic(err)

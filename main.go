@@ -2,6 +2,8 @@ package main
 
 import (
 	"field-day/controllers"
+	"field-day/models"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -23,8 +25,18 @@ const (
 )
 
 func main() {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	us, err := models.NewUserService(psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	us.AutoMigrate()
+
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers()
+	usersC := controllers.NewUsers(us)
 
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
