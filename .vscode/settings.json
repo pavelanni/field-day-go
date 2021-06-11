@@ -1,0 +1,25 @@
+{
+    "cSpell.ignoreWords": [
+        "callsign",
+        "end",
+        "first",
+        "h",
+        "list",
+        "member",
+        "name",
+        "nfarl",
+        "of",
+        "range",
+        "table",
+        "td",
+        "th",
+        "time",
+        "tr",
+        "visitors"
+    ],
+    "spellright.language": [],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex"
+    ]
+}
