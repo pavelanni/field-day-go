@@ -3,7 +3,6 @@ package main
 import (
 	"field-day/controllers"
 	"field-day/models"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,19 +16,11 @@ type Visitor struct {
 }
 
 const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "mysecretpassword"
-	dbname   = "fieldday_dev"
+	dbfile = "field-day.db"
 )
 
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-
-	us, err := models.NewUserService(psqlInfo)
+	us, err := models.NewUserService(dbfile)
 	if err != nil {
 		panic(err)
 	}

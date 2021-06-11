@@ -31,7 +31,24 @@ func NewUsers(us *models.UserService) *Users {
 }
 
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	if err := u.NewView.Render(w, nil); err != nil {
+	type Alert struct {
+		Level   string
+		Message string
+	}
+	type Data struct {
+		Alert *Alert
+		Yield interface{}
+	}
+
+	alert := Alert{
+		Level:   "success",
+		Message: "Successfully registered a new visitor!",
+	}
+	data := Data{
+		Alert: &alert,
+		Yield: "this can be any data beacuse its type in interface",
+	}
+	if err := u.NewView.Render(w, data); err != nil {
 		panic(err)
 	}
 }

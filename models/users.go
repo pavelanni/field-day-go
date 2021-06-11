@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -15,18 +15,6 @@ var (
 	ErrNotFound  = errors.New("models: resource not found")
 	ErrInvalidID = errors.New("models: ID provided was invalid")
 )
-
-/*
-   fields = ('first_name',
-             'last_name',
-             'call_sign',
-             'nfarl_member',
-             'contact_me',
-             'email',
-             'first_time',
-             'younger_than_18',
-             )
-*/
 
 type User struct {
 	gorm.Model
@@ -44,7 +32,7 @@ type UserService struct {
 	db *gorm.DB
 }
 
-func NewUserService(dsn string) (*UserService, error) {
+func NewUserService(dbfile string) (*UserService, error) {
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 		logger.Config{
@@ -54,7 +42,9 @@ func NewUserService(dsn string) (*UserService, error) {
 			Colorful:                  true,         // Disable color
 		},
 	)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: newLogger})
+	//	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: newLogger})
+	db, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{Logger: newLogger})
+
 	if err != nil {
 		panic(err)
 	}
