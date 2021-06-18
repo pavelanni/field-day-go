@@ -3,7 +3,6 @@ package controllers
 import (
 	"field-day/models"
 	"field-day/views"
-	"fmt"
 	"net/http"
 )
 
@@ -46,7 +45,7 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{
 		Alert: &alert,
-		Yield: "this can be any data beacuse its type in interface",
+		Yield: "NFARL Field Day 2021",
 	}
 	if err := u.NewView.Render(w, data); err != nil {
 		panic(err)
@@ -72,5 +71,5 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(w, "User is ", user)
+	http.Redirect(w, r, "/confirmation", http.StatusSeeOther)
 }
