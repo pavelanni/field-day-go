@@ -68,6 +68,12 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	return &user, err
 }
 
+func (us *UserService) ListAll() ([]User, error) {
+	var users []User
+	result := us.db.Find(&users)
+	return users, result.Error
+}
+
 func first(db *gorm.DB, dst interface{}) error {
 	err := db.First(dst).Error
 	if err == gorm.ErrRecordNotFound {

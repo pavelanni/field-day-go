@@ -2,4 +2,4 @@ I am learning Go by migrating my Field Day registration application that
 I wrote several years ago to learn Django.
 
 I am using Jon Calhoun's course (https://www.usegolang.com/) for that slightly
-modifying it for my own needs and updating some components (like Bootstrap from 3 to 4).
+modifying it for my own needs and updating some components (like Bootstrap from 3 to 4 and gorm.io).
