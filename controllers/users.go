@@ -29,6 +29,13 @@ func NewUsers(us *models.UserService) *Users {
 	}
 }
 
+func ListUsers(us *models.UserService) *Users {
+	return &Users{
+		NewView: views.NewView("bootstrap", "users/list"),
+		us:      us,
+	}
+}
+
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	type Alert struct {
 		Level   string
@@ -46,6 +53,24 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	data := Data{
 		Alert: &alert,
 		Yield: "NFARL Field Day 2021",
+	}
+	if err := u.NewView.Render(w, data); err != nil {
+		panic(err)
+	}
+}
+
+func (u *Users) List(w http.ResponseWriter, r *http.Request) {
+	var users []models.User
+	type Data struct {
+		Yield interface{}
+	}
+	users, err := u.us.ListAll()
+	data := Data{
+		Yield: users,
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	if err := u.NewView.Render(w, data); err != nil {
 		panic(err)

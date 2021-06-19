@@ -1,18 +1,24 @@
 {{define "yield"}}
 <h1>List of visitors</h1>
 
-<table border=1>
+<table class="table">
     <tr>
-        <th>Name</th>
+        <th>#</th>
+        <th>First Name</th>
+        <th>Last Name</th>
         <th>Callsign</th>
         <th>First time</th>
+        <th>Youth</th>
         <th>NFARL member</th>
     </tr>
     {{range .}}
     <tr>
-        <td>{{.Name}}</td>
+        <td>{{.ID}}</td>
+        <td>{{.FirstName}}</td>
+        <td>{{.LastName}}</td>
         <td>{{.Callsign}}</td>
-        <td>{{.FirstTime}}</td>
+        <td>{{.Firsttime}}</td>
+        <td>{{.Youth}}</td>
         <td>{{.Nfarl}}</td>
     </tr>
     {{end}}

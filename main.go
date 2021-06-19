@@ -30,6 +30,7 @@ func main() {
 
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
+	listC := controllers.ListUsers(us)
 
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
@@ -37,6 +38,7 @@ func main() {
 	r.Handle("/confirmation", staticC.Confirmation).Methods("GET")
 	r.HandleFunc("/new", usersC.New).Methods("GET")
 	r.HandleFunc("/new", usersC.Create).Methods("POST")
+	r.HandleFunc("/list", listC.List).Methods("GET")
 	r.PathPrefix(staticDir).
 		Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 	http.ListenAndServe(":3000", r)
