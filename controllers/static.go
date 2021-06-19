@@ -4,9 +4,9 @@ import "field-day/views"
 
 func NewStatic() *Static {
 	return &Static{
-		Home:         views.NewView("bootstrap", "static/home"),
+		Home:         views.NewView("bootstrap-refresh", "static/home"),
 		Contact:      views.NewView("bootstrap", "static/contact"),
-		Confirmation: views.NewView("bootstrap", "static/confirmation"),
+		Confirmation: views.NewView("bootstrap-refresh", "static/confirmation"),
 	}
 }
 
