@@ -1,0 +1,13 @@
+# put this file in /lib/systemd/system
+[Unit]
+Description=Field Day Registration Kiosk
+After=network.target remote-fs.target nss-lookup.target
+Documentation=https://github.com/pavelanni/field-day-go
+
+[Service]
+Type=simple
+ExecStart=/var/local/field-day-go/start.sh
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
