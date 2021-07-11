@@ -5,18 +5,19 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"reflect"
+
+	"github.com/gorilla/schema"
 )
 
 type Visitor struct {
-	FirstName string `form:"firstname"`
-	LastName  string `form:"lastname"`
-	Callsign  string `form:"callsign"`
-	Email     string `form:"email"`
-	Nfarl     bool   `form:"nfarl"`
-	Contactme bool   `form:"contactme"`
-	Youth     bool   `form:"youth"`
-	Firsttime bool   `form:"firsttime"`
+	FirstName string `schema:"firstname"`
+	LastName  string `schema:"lastname"`
+	Callsign  string `schema:"callsign"`
+	Email     string `schema:"email"`
+	Nfarl     bool   `schema:"nfarl"`
+	Contactme bool   `schema:"contactme"`
+	Youth     bool   `schema:"youth"`
+	Firsttime bool   `schema:"firsttime"`
 }
 
 var templateDir = "templates"
@@ -77,28 +78,16 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	r.ParseForm()
-	// This is my own attempt to implement something like gorilla.schema
-	// It was good to use it to learn more about reflect package
-	// but probably I should use the existing gorilla.schema
+	// If POST
 	v := Visitor{}
-	vt := reflect.TypeOf(v)
-	vp := reflect.ValueOf(&v)
-	vpe := vp.Elem()
-	for i := 0; i < vt.NumField(); i++ {
-		if vpe.Field(i).Kind() == reflect.String {
-			vpe.Field(i).SetString(r.PostForm[vt.Field(i).Tag.Get("form")][0])
-		}
-		if vpe.Field(i).Kind() == reflect.Bool {
-			if len(r.PostForm[vt.Field(i).Tag.Get("form")]) == 1 {
-				vpe.Field(i).SetBool(true)
-			} else {
-				vpe.Field(i).SetBool(false)
-			}
-		}
+	if err := r.ParseForm(); err != nil {
+		panic(err)
+	}
+	dec := schema.NewDecoder()
+	if err := dec.Decode(&v, r.PostForm); err != nil {
+		panic(err)
 	}
 	fmt.Fprintln(w, v)
-
 }
 
 func main() {
