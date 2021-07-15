@@ -5,11 +5,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/schema"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Visitor struct {
+	gorm.Model
 	FirstName string `schema:"firstname"`
 	LastName  string `schema:"lastname"`
 	Callsign  string `schema:"callsign"`
@@ -22,6 +26,18 @@ type Visitor struct {
 
 var templateDir = "templates"
 var staticDir = "static"
+var dbFile = "fd2021.db"
+
+func SaveVisitor(v Visitor) {
+	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	result := db.Create(&v)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
@@ -88,9 +104,18 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	fmt.Fprintln(w, v)
+	SaveVisitor(v)
 }
 
 func main() {
+	_, err := os.Stat(dbFile)
+	if os.IsNotExist(err) { // create the table
+		db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
+		if err != nil {
+			panic(err)
+		}
+		db.AutoMigrate(&Visitor{})
+	}
 	fs := http.FileServer(http.Dir(staticDir))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
