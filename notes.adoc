@@ -1,5 +1,14 @@
 = Field Day registration: port to Go
 
+2021-07-17:: 
+The simplified app looks much lighter now. 
+I decided to follow the simplicity rule of Go: if the application is simple, why make it more complex
+only to satisfy some "architecture best practices".
+Now the whole Registration Kiosk app is only 168 lines and fits just one `main.go` file.
+At least now, after I rewrote it myself, I understand it much better.
+Jon Calhoun's MVC approach from the book/course is good, but not for this simple task.
+I'd rather have an app that I can easily understand and observe, than follow the "best practices" and
+create tons of boilerplate without real need for it.
 
 
 2021-07-17:: 
