@@ -12,7 +12,7 @@
 
     <div class="container-fluid">
         {{template "header"}}
-        {{template "content"}}
+        {{template "content" .}}
         {{template "footer"}}
     </div>
 
@@ -26,4 +26,4 @@
 </html>
 {{end}}
 
-{{template "bootstrap"}}
+{{template "bootstrap" .}}

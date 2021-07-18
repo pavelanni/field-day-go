@@ -1,4 +1,4 @@
-{{define "bootstrap"}}
+{{define "bootstrap-refresh"}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,7 +13,7 @@
 
     <div class="container-fluid">
         {{template "header"}}
-        {{template "content"}}
+        {{template "content" .}}
         {{template "footer"}}
     </div>
 
@@ -27,4 +27,4 @@
 </html>
 {{end}}
 
-{{template "bootstrap"}}
+{{template "bootstrap-refresh" .}}

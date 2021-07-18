@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -28,15 +27,16 @@ var templateDir = "templates"
 var staticDir = "static"
 var dbFile = "fd2021.db"
 
-func SaveVisitor(v Visitor) {
+func saveVisitor(v Visitor) error {
 	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	result := db.Create(&v)
 	if result.Error != nil {
-		panic(result.Error)
+		return result.Error
 	}
+	return nil
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +75,34 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func listHandler(w http.ResponseWriter, r *http.Request) {
+	files := []string{
+		templateDir + "/bootstrap.go.html",
+		templateDir + "/header.go.html",
+		templateDir + "/list.go.html",
+		templateDir + "/footer.go.html",
+	}
+	tmpl, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var visitors []Visitor
+	result := db.Find(&visitors)
+	if result.Error != nil {
+		log.Fatal(result.Error)
+	}
+	err = tmpl.Execute(w, visitors)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func newHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		files := []string{
@@ -97,24 +125,37 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 	// If POST
 	v := Visitor{}
 	if err := r.ParseForm(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	dec := schema.NewDecoder()
 	if err := dec.Decode(&v, r.PostForm); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	fmt.Fprintln(w, v)
-	SaveVisitor(v)
+	if err := saveVisitor(v); err != nil {
+		log.Fatal(err)
+	}
+	http.Redirect(w, r, "/confirmation", http.StatusSeeOther)
 }
 
-func main() {
+func createTable(dbFile string) error {
 	_, err := os.Stat(dbFile)
 	if os.IsNotExist(err) { // create the table
 		db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
 		if err != nil {
-			panic(err)
+			return err
 		}
-		db.AutoMigrate(&Visitor{})
+		err = db.AutoMigrate(&Visitor{})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func main() {
+	err := createTable(dbFile)
+	if err != nil {
+		log.Fatal(err)
 	}
 	fs := http.FileServer(http.Dir(staticDir))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -122,5 +163,6 @@ func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/new", newHandler)
 	http.HandleFunc("/confirmation", confirmHandler)
+	http.HandleFunc("/list", listHandler)
 	http.ListenAndServe(":3000", nil)
 }
