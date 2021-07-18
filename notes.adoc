@@ -1,0 +1,49 @@
+= Field Day registration: port to Go
+
+2021-07-17:: 
+The simplified app looks much lighter now. 
+I decided to follow the simplicity rule of Go: if the application is simple, why make it more complex
+only to satisfy some "architecture best practices".
+Now the whole Registration Kiosk app is only 168 lines and fits just one `main.go` file.
+At least now, after I rewrote it myself, I understand it much better.
+Jon Calhoun's MVC approach from the book/course is good, but not for this simple task.
+I'd rather have an app that I can easily understand and observe, than follow the "best practices" and
+create tons of boilerplate without real need for it.
+
+
+2021-07-17:: 
+I've added the list function today.
++
+I've been struggling with the list template -- it didn't see the `visitors` slice that I was passing.
+The reason was that you should add the dot when calling a nested template.
+In my case the `bootstrap` template calls the `content` template.
+If you want to process any data in the `content` template you should call it like this: 
+`{{template "content" . }}`.
+More than that, in my case the `bootstrap` template first defines itself (`{{define "bootstrap"}}`)
+and then, at the end of the template, it calls itself: `{{template "bootstrap"}}`.
+In this last call you should also pass the dot and use it `{{template "bootstrap" . }}`.
+
+2021-07-10::
+After I decided not to use any framework (like Gorilla in the original implamentation based 
+of the book by Jon Calhoun) I found myself struggling with the problem of filling the 
+data structure from the Web form. 
+In Gorilla is is solved by using the `schema` package.
+I decided to explore this problem and solve it myself.
+The way to solve it is to use _tags_ in the struct.
+But to parse them properly you have to use the `reflect` package.
+I heard that it's not considered a good practice, but it didn't look like there are other ways.
++
+After reading Rob Pike's article (https://blog.golang.org/laws-of-reflection) I was
+brave enough to implement something myself.
++
+I ended up with using the tag `form` (instead of `schema`) and implementing 
+what I have learned from the article. 
+Here is the Gist: https://gist.github.com/pavelanni/5021927367867dc31ce0b464fa5364c1
+It's far from elegant, and most likely not how it should be implemented,
+but at least I tried ;-) 
++
+I ended up using `gorilla/schema` -- it's more convenient than recreating this from scratch.
+But it was a good practice anyway.
+
+
+

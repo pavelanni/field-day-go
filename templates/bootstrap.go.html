@@ -1,4 +1,4 @@
-{{define "bootstrap-refresh"}}
+{{define "bootstrap"}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,19 +6,16 @@
     <title>NFARL Field Day 2021</title>
     <link href="/static/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
-    <meta http-equiv="refresh" content="5;url=/new" />
 </head>
 
 <body>
-    <!--
-{{template "navbar"}}
-  -->
 
     <div class="container-fluid">
         {{template "header"}}
-        {{template "yield" .Yield}}
+        {{template "content" .}}
         {{template "footer"}}
     </div>
+
 
     <!-- jquery & Bootstrap JS -->
     <script src="/static/js/bootstrap.bundle.min.js"
@@ -28,3 +25,5 @@
 
 </html>
 {{end}}
+
+{{template "bootstrap" .}}
