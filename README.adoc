@@ -19,18 +19,11 @@ I put the app on a Raspberry Pi. In my case it was Raspberry Pi 2 Model B (even 
 so I didn't worry about leaving it at the registration table in the park where we had
 our Field Day.
 
-I created a simple `start.sh` script and placed it together with the rest of the app
-in `/var/local/field-day-go`.
-The script simply changes to the app directory and starts the binary -- just
-to make sure all relative paths are resolved properly.
-Probably it could be done from within the app itself -- the room for improvement for 
-the next version.
+I created a simple Makefile to build and copy the application into the appropriate 
+directories.
+It creates a service that starts the app automatically when the system boots.
 
-I created a `fieldday.service` file and placed it in `/lib/systemd/system`. 
-It's almost a copy of the `apache2.service` file.
-Now I can `systemctl enable fieldday` and `systemctl start fieldday`.
-
-I created a user on the RPi and in that user's Chromium browser I set the start page
+I created a user named `registration` on the RPi and in that user's Chromium browser I set the start page
 to `http://localhost:3000/new`.
 
 I followed the instructions from here: https://smarthomepursuits.com/disable-sleep-on-raspberry-pi/
