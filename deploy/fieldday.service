@@ -6,7 +6,7 @@ Documentation=https://github.com/pavelanni/field-day-go
 
 [Service]
 Type=simple
-ExecStart=/var/local/field-day-go/start.sh
+ExecStart=/var/local/fieldday/start.sh
 Restart=on-abort
 
 [Install]
