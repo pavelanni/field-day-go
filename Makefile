@@ -11,6 +11,6 @@ user:
 	deploy/mkuser.sh
 	mkdir -p ~registration/.config/lxsession/LXDE-pi/
 	cp deploy/autostart  ~registration/.config/lxsession/LXDE-pi/
-	chown -R registration ~registration/.config/lxsession/LXDE-pi/
+	chown -R registration ~registration/.config
 
-all: build install
+all: build install user
