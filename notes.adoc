@@ -44,6 +44,12 @@ but at least I tried ;-)
 +
 I ended up using `gorilla/schema` -- it's more convenient than recreating this from scratch.
 But it was a good practice anyway.
++
+Also I learned that when you have a form with checkboxes the form returns only
+those that are checked (with `on`). 
+Those that are not checked are not even mentioned in the returned form.
+Parsing such a form properly requires knowing the whole _expected_ form content.
+Which makes using `gorilla/schema` even more appealing.
 
 
 
