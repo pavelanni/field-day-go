@@ -1,5 +1,5 @@
 build:
-	go build -o fieldday cmd/main.go
+	go build -o fieldday main.go
 
 install:
 	mkdir -p /var/local/fieldday
