@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Visitor contains information about Field Day visitors
 type Visitor struct {
 	gorm.Model
 	FirstName string `schema:"firstname"`
@@ -25,7 +26,7 @@ type Visitor struct {
 
 var templateDir = "templates"
 var staticDir = "static"
-var dbFile = "fd2021.db"
+var dbFile = "fd2022.db"
 
 func saveVisitor(v Visitor) error {
 	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
@@ -152,7 +153,10 @@ func createTable(dbFile string) error {
 	return nil
 }
 
-func main() {
+// Run opens the database and starts the server
+// Using Run func allows us to test it later (we can't test the main func)
+// I learned it from Elliot of TutorialEdge.net
+func Run() error {
 	err := createTable(dbFile)
 	if err != nil {
 		log.Fatal(err)
@@ -164,5 +168,11 @@ func main() {
 	http.HandleFunc("/new", newHandler)
 	http.HandleFunc("/confirmation", confirmHandler)
 	http.HandleFunc("/list", listHandler)
-	http.ListenAndServe(":3000", nil)
+	return http.ListenAndServe(":3000", nil)
+}
+
+func main() {
+	if err := Run(); err != nil {
+		log.Fatal(err)
+	}
 }
