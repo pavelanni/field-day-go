@@ -32,6 +32,23 @@ to disable screen lock and autostart Chromium in full screen mode.
 I followed the instructions from here: https://raspberrypi.stackexchange.com/questions/40415/how-to-enable-auto-login
 to enable autologin for the user that will access the app.
 
+== Hardware
+
+I use Raspberri Pi to run this at the Field Day location. 
+Since I added the registration timestamps I noticed gaps in the registration.
+Apparently that was because somebody turned off the system during the night and 
+Raspberry Pi lost the date.
+When I connect it to Internet (via a hotspot on my phone) it restores the date,
+but some registration timestamps are still shifted.
+
+I am going to add an RTC (real-time clock) to the Pi to keep the date even when it's powered off.
+This might be a good source of information: https://pimylifeup.com/raspberry-pi-rtc/.
+
+
+== Post-event processing
+
+Use the following instructions to convert the visitors data to CSV: https://www.sqlitetutorial.net/sqlite-export-csv/
+
  
 
 
