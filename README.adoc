@@ -44,6 +44,8 @@ but some registration timestamps are still shifted.
 I am going to add an RTC (real-time clock) to the Pi to keep the date even when it's powered off.
 This might be a good source of information: https://pimylifeup.com/raspberry-pi-rtc/.
 
+This board also looks good. It plugs directly into the RPi board: https://www.amazon.com/Makerfire%C2%AE-Raspberry-Module-DS1307-Battery/dp/B00ZOXWHK4/
+
 
 == Post-event processing
 
