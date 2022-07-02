@@ -1,6 +1,8 @@
-if id "registration" &>/dev/null; then
-    echo 'User registration exists'
+#!/usr/bin/bash
+
+if id nfarl  &>/dev/null ; then
+    echo 'User nfarl exists'
 else
-    echo 'Creating user registration'
-    useradd -p nfdfhyMCZWk6w -c "Registration" -m registration
+    echo 'Creating user nfarl'
+    useradd -p nfdfhyMCZWk6w -c "NFARL" -m nfarl
 fi
