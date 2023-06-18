@@ -26,7 +26,7 @@ type Visitor struct {
 
 var templateDir = "templates"
 var staticDir = "static"
-var dbFile = "fd2022.db"
+var dbFile string
 
 func saveVisitor(v Visitor) error {
 	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
@@ -168,10 +168,15 @@ func Run() error {
 	http.HandleFunc("/new", newHandler)
 	http.HandleFunc("/confirmation", confirmHandler)
 	http.HandleFunc("/list", listHandler)
+	log.Println("Listening on port 3000")
 	return http.ListenAndServe(":3000", nil)
 }
 
 func main() {
+	if len(os.Args) == 1 {
+		log.Fatal("Please provide a database file")
+	}
+	dbFile = os.Args[1]
 	if err := Run(); err != nil {
 		log.Fatal(err)
 	}
