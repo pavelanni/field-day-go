@@ -1,56 +1,55 @@
 = Field Day Registration Kiosk
 
-== Why
+I wrote this simple program to help my Amateur Radio club (North Fulton Amateur Radio League)
+to register visitors on our annual Field Day event.
 
-I am learning Go by migrating my Field Day registration application that 
-I wrote several years ago to learn Django.
-
-I am using Jon Calhoun's course (https://www.usegolang.com/) for that slightly
-modifying it for my own needs and updating some components (like Bootstrap from 3 to 5 and gorm.io).
-
-Of course, the course and the project have more than I need for this simple app, but -- I am learning. :-) 
+Over the years it became my sandbox to try and practice various ideas and development approaches.
 
 == Deployment
 
-(Mostly these notes are for myself to be able to reproduce the setup next year
-without much googling.)
+The application is usually deployed on a Raspberry Pi.
+It can deployed on any other computer that you can leave in the park overnight.
 
-I put the app on a Raspberry Pi. In my case it was Raspberry Pi 2 Model B (even without wireless) 
-so I didn't worry about leaving it at the registration table in the park where we had
-our Field Day.
+=== Prerequisites
 
-I created a simple Makefile to build and copy the application into the appropriate 
-directories.
-It creates a service that starts the app automatically when the system boots.
+* Linux OS (any recent version will do)
+* Go 1.18 and higher
+* Git CLI
+* gcc (see here: https://github.com/mattn/go-sqlite3#installation)
+* `sudo` access on the target host
 
-I created a user named `registration` on the RPi and in that user's Chromium browser I set the start page
-to `http://localhost:3000/new`.
+=== Build
 
-I followed the instructions from here: https://smarthomepursuits.com/disable-sleep-on-raspberry-pi/
-to disable screen lock and autostart Chromium in full screen mode.
+. Clone this repo on the target computer and `cd` into that directory.
+. Run `make build`. That will create a binary in the root directory.
+. Test it by running `./fieldday test.db`. Enter one or two visitors.
+Check if they were added to the database by adding `/list` to the main URL (instead of `/new`).
 
-I followed the instructions from here: https://raspberrypi.stackexchange.com/questions/40415/how-to-enable-auto-login
-to enable autologin for the user that will access the app.
+=== Install
 
-== Hardware
+. Run `sudo make install`. That will copy the binary and template files to `/var/local/fieldday`.
+. Run `sudo make user`. That will create a user named `nfarl` and configure their environment (e.g. autostart of the browser in full screen mode, etc.).
 
-I use Raspberri Pi to run this at the Field Day location. 
-Since I added the registration timestamps I noticed gaps in the registration.
-Apparently that was because somebody turned off the system during the night and 
-Raspberry Pi lost the date.
-When I connect it to Internet (via a hotspot on my phone) it restores the date,
-but some registration timestamps are still shifted.
+=== Upgrade
 
-I am going to add an RTC (real-time clock) to the Pi to keep the date even when it's powered off.
-This might be a good source of information: https://pimylifeup.com/raspberry-pi-rtc/.
+. `git pull`
+. `make build`
+. `sudo make install`
 
-This board also looks good. It plugs directly into the RPi board: https://www.amazon.com/Makerfire%C2%AE-Raspberry-Module-DS1307-Battery/dp/B00ZOXWHK4/
+=== Real-time clock
 
+The program adds timestamps to each visitor record automatically.
+But in the field the host doesn't have any network connection so in case somebody turns it off the timestamps will be all wrong after that.
+To avoid such a situation you can add a simple battery-powered real-time clock (RTC) to Raspberry Pi and configure it accordingly.
+
+This is the one I added to my installation: https://www.amazon.com/Makerfire%C2%AE-Raspberry-Module-DS1307-Battery/dp/B00ZOXWHK4/
+
+This is a good instruction on how to configure it: https://pimylifeup.com/raspberry-pi-rtc/.
 
 == Post-event processing
 
 Use the following instructions to convert the visitors data to CSV: https://www.sqlitetutorial.net/sqlite-export-csv/
 
- 
+
 
 

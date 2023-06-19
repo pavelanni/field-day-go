@@ -1,7 +1,54 @@
 = Field Day registration: port to Go
 
-2021-07-17:: 
-The simplified app looks much lighter now. 
+== Why
+
+I am learning Go by migrating my Field Day registration application that
+I wrote several years ago to learn Django.
+
+I am using Jon Calhoun's course (https://www.usegolang.com/) for that slightly
+modifying it for my own needs and updating some components (like Bootstrap from 3 to 5 and gorm.io).
+
+Of course, the course and the project have more than I need for this simple app, but -- I am learning. :-)
+
+(Mostly these notes are for myself to be able to reproduce the setup next year
+without much googling.)
+
+I put the app on a Raspberry Pi. In my case it was Raspberry Pi 2 Model B (even without wireless)
+so I didn't worry about leaving it at the registration table in the park where we had
+our Field Day.
+
+I created a simple Makefile to build and copy the application into the appropriate
+directories.
+It creates a service that starts the app automatically when the system boots.
+
+I created a user named `registration` on the RPi and in that user's Chromium browser I set the start page
+to `http://localhost:3000/new`.
+
+I followed the instructions from here: https://smarthomepursuits.com/disable-sleep-on-raspberry-pi/
+to disable screen lock and autostart Chromium in full screen mode.
+
+I followed the instructions from here: https://raspberrypi.stackexchange.com/questions/40415/how-to-enable-auto-login
+to enable autologin for the user that will access the app.
+
+== Hardware
+
+I use Raspberri Pi to run this at the Field Day location.
+Since I added the registration timestamps I noticed gaps in the registration.
+Apparently that was because somebody turned off the system during the night and
+Raspberry Pi lost the date.
+When I connect it to Internet (via a hotspot on my phone) it restores the date,
+but some registration timestamps are still shifted.
+
+I am going to add an RTC (real-time clock) to the Pi to keep the date even when it's powered off.
+This might be a good source of information: https://pimylifeup.com/raspberry-pi-rtc/.
+
+This board also looks good. It plugs directly into the RPi board: https://www.amazon.com/Makerfire%C2%AE-Raspberry-Module-DS1307-Battery/dp/B00ZOXWHK4/
+
+
+
+
+2021-07-17::
+The simplified app looks much lighter now.
 I decided to follow the simplicity rule of Go: if the application is simple, why make it more complex
 only to satisfy some "architecture best practices".
 Now the whole Registration Kiosk app is only 168 lines and fits just one `main.go` file.
@@ -11,22 +58,22 @@ I'd rather have an app that I can easily understand and observe, than follow the
 create tons of boilerplate without real need for it.
 
 
-2021-07-17:: 
+2021-07-17::
 I've added the list function today.
 +
 I've been struggling with the list template -- it didn't see the `visitors` slice that I was passing.
 The reason was that you should add the dot when calling a nested template.
 In my case the `bootstrap` template calls the `content` template.
-If you want to process any data in the `content` template you should call it like this: 
+If you want to process any data in the `content` template you should call it like this:
 `{{template "content" . }}`.
 More than that, in my case the `bootstrap` template first defines itself (`{{define "bootstrap"}}`)
 and then, at the end of the template, it calls itself: `{{template "bootstrap"}}`.
 In this last call you should also pass the dot and use it `{{template "bootstrap" . }}`.
 
 2021-07-10::
-After I decided not to use any framework (like Gorilla in the original implamentation based 
-of the book by Jon Calhoun) I found myself struggling with the problem of filling the 
-data structure from the Web form. 
+After I decided not to use any framework (like Gorilla in the original implamentation based
+of the book by Jon Calhoun) I found myself struggling with the problem of filling the
+data structure from the Web form.
 In Gorilla is is solved by using the `schema` package.
 I decided to explore this problem and solve it myself.
 The way to solve it is to use _tags_ in the struct.
@@ -36,17 +83,17 @@ I heard that it's not considered a good practice, but it didn't look like there 
 After reading Rob Pike's article (https://blog.golang.org/laws-of-reflection) I was
 brave enough to implement something myself.
 +
-I ended up with using the tag `form` (instead of `schema`) and implementing 
-what I have learned from the article. 
+I ended up with using the tag `form` (instead of `schema`) and implementing
+what I have learned from the article.
 Here is the Gist: https://gist.github.com/pavelanni/5021927367867dc31ce0b464fa5364c1
 It's far from elegant, and most likely not how it should be implemented,
-but at least I tried ;-) 
+but at least I tried ;-)
 +
 I ended up using `gorilla/schema` -- it's more convenient than recreating this from scratch.
 But it was a good practice anyway.
 +
 Also I learned that when you have a form with checkboxes the form returns only
-those that are checked (with `on`). 
+those that are checked (with `on`).
 Those that are not checked are not even mentioned in the returned form.
 Parsing such a form properly requires knowing the whole _expected_ form content.
 Which makes using `gorilla/schema` even more appealing.
