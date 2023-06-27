@@ -19,7 +19,13 @@ jobs:
         go-version: 1.18
 
     - name: Build
-      run: env GOOS=linux GOARCH=arm go build -v ./...
+      run: env GOOS=linux GOARCH=arm go build -v ./... -o fieldday
 
     - name: Test
       run: env GOOS=linux GOARCH=arm go test -v ./...
+      
+    - name: Save the binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: fieldday
+        path: fieldday
