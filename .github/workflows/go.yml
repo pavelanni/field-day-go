@@ -19,7 +19,7 @@ jobs:
         go-version: 1.18
 
     - name: Build
-      run: env GOOS=linux GOARCH=arm go build -v ./... -o fieldday
+      run: env GOOS=linux GOARCH=arm go build -o fieldday -v ./...
 
     - name: Test
       run: env GOOS=linux GOARCH=arm go test -v ./...
