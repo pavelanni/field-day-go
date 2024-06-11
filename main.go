@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/gorilla/schema"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -27,18 +26,6 @@ type Visitor struct {
 var templateDir = "templates"
 var staticDir = "static"
 var dbFile string
-
-func saveVisitor(v Visitor) error {
-	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-	result := db.Create(&v)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
@@ -88,17 +75,11 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
+	visitors, err := listVisitors(dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var visitors []Visitor
-	result := db.Find(&visitors)
-	if result.Error != nil {
-		log.Fatal(result.Error)
-	}
 	err = tmpl.Execute(w, visitors)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -136,21 +117,6 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	http.Redirect(w, r, "/confirmation", http.StatusSeeOther)
-}
-
-func createTable(dbFile string) error {
-	_, err := os.Stat(dbFile)
-	if os.IsNotExist(err) { // create the table
-		db, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{})
-		if err != nil {
-			return err
-		}
-		err = db.AutoMigrate(&Visitor{})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Run opens the database and starts the server
