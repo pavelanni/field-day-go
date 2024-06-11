@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/asdine/storm/v3"
 	"github.com/gorilla/schema"
-	"gorm.io/gorm"
 )
 
 // Visitor contains information about Field Day visitors
 type Visitor struct {
-	gorm.Model
+	ID        int    `storm:"id,increment"`
 	FirstName string `schema:"firstname"`
 	LastName  string `schema:"lastname"`
 	Callsign  string `schema:"callsign"`
@@ -26,6 +26,7 @@ type Visitor struct {
 var templateDir = "templates"
 var staticDir = "static"
 var dbFile string
+var db *storm.DB
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
@@ -75,7 +76,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	visitors, err := listVisitors(dbFile)
+	visitors, err := listVisitors()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,10 +124,6 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 // Using Run func allows us to test it later (we can't test the main func)
 // I learned it from Elliot of TutorialEdge.net
 func Run() error {
-	err := createTable(dbFile)
-	if err != nil {
-		log.Fatal(err)
-	}
 	fs := http.FileServer(http.Dir(staticDir))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
@@ -143,6 +140,11 @@ func main() {
 		log.Fatal("Please provide a database file")
 	}
 	dbFile = os.Args[1]
+	db, err := storm.Open(dbFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 	if err := Run(); err != nil {
 		log.Fatal(err)
 	}
