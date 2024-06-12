@@ -7,26 +7,37 @@ import (
 	"os"
 
 	"github.com/gorilla/schema"
-	"gorm.io/gorm"
+	"github.com/pavelanni/field-day-go/visitorstore"
 )
-
-// Visitor contains information about Field Day visitors
-type Visitor struct {
-	gorm.Model
-	FirstName string `schema:"firstname"`
-	LastName  string `schema:"lastname"`
-	Callsign  string `schema:"callsign"`
-	Email     string `schema:"email"`
-	Nfarl     bool   `schema:"nfarl"`
-	Contactme bool   `schema:"contactme"`
-	Youth     bool   `schema:"youth"`
-	Firsttime bool   `schema:"firsttime"`
-}
 
 var templateDir = "templates"
 var staticDir = "static"
-var dbFile string
 
+type Server struct {
+	store *visitorstore.VisitorStore
+}
+
+func NewServer(dbFile string) (*Server, error) {
+	store, err := visitorstore.NewVisitorStore(dbFile)
+	if err != nil {
+		return nil, err
+	}
+	return &Server{store}, nil
+}
+
+func (s *Server) Run() error {
+	fs := http.FileServer(http.Dir(staticDir))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/new", s.NewVisitorHandler)
+	http.HandleFunc("/confirmation", confirmHandler)
+	http.HandleFunc("/list", s.ListHandler)
+	log.Println("Listening on port 3000")
+	return http.ListenAndServe(":3000", nil)
+}
+
+// Handlers
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
 		templateDir + "/bootstrap-refresh.go.html",
@@ -63,7 +74,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func listHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
 		templateDir + "/bootstrap.go.html",
 		templateDir + "/header.go.html",
@@ -75,7 +86,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	visitors, err := listVisitors(dbFile)
+	visitors, err := s.store.ListVisitors()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +96,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func newHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		files := []string{
 			templateDir + "/bootstrap.go.html",
@@ -95,55 +106,48 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		tmpl, err := template.ParseFiles(files...)
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, "Template parsing error", http.StatusInternalServerError)
+			return
 		}
 		err = tmpl.Execute(w, nil)
 
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, "Template execution error", http.StatusInternalServerError)
+			return
 		}
 		return
 	}
 	// If POST
-	v := Visitor{}
+	v := visitorstore.Visitor{}
 	if err := r.ParseForm(); err != nil {
-		log.Fatal(err)
+		http.Error(w, "Form parsing error; please return to the previous page", http.StatusInternalServerError)
+		return
 	}
 	dec := schema.NewDecoder()
 	if err := dec.Decode(&v, r.PostForm); err != nil {
-		log.Fatal(err)
+		http.Error(w, "Form decoding error; please return to the previous page", http.StatusInternalServerError)
+		return
 	}
-	if err := saveVisitor(v); err != nil {
-		log.Fatal(err)
+	if err := s.store.SaveVisitor(v); err != nil {
+		http.Error(w, "Visitor saving error; please return to the previous page", http.StatusInternalServerError)
+		return
 	}
 	http.Redirect(w, r, "/confirmation", http.StatusSeeOther)
-}
-
-// Run opens the database and starts the server
-// Using Run func allows us to test it later (we can't test the main func)
-// I learned it from Elliot of TutorialEdge.net
-func Run() error {
-	err := createTable(dbFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fs := http.FileServer(http.Dir(staticDir))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/new", newHandler)
-	http.HandleFunc("/confirmation", confirmHandler)
-	http.HandleFunc("/list", listHandler)
-	log.Println("Listening on port 3000")
-	return http.ListenAndServe(":3000", nil)
 }
 
 func main() {
 	if len(os.Args) == 1 {
 		log.Fatal("Please provide a database file")
 	}
-	dbFile = os.Args[1]
-	if err := Run(); err != nil {
+	dbFile := os.Args[1]
+
+	server, err := NewServer(dbFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = server.Run()
+	if err != nil {
 		log.Fatal(err)
 	}
 }
