@@ -13,9 +13,8 @@ It can deployed on any other computer that you can leave in the park overnight.
 === Prerequisites
 
 * Linux OS (any recent version will do)
-* Go 1.18 and higher
+* Go 1.22 and higher
 * Git CLI
-* gcc (see here: https://github.com/mattn/go-sqlite3#installation)
 * `sudo` access on the target host
 
 === Build
