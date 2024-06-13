@@ -1,13 +1,14 @@
 = Field Day Registration Kiosk
 
-I wrote this simple program to help my Amateur Radio club (North Fulton Amateur Radio League)
+I wrote this simple program to help my Amateur Radio club (North Fulton Amateur Radio League, https://nfarl.org)
 to register visitors on our annual Field Day event.
 
 Over the years it became my sandbox to try and practice various ideas and development approaches.
+See the <<Development history>> below.
 
 == Deployment
 
-The application is usually deployed on a Raspberry Pi.
+The application is usually deployed on a Raspberry Pi or compatible boards.
 It can deployed on any other computer that you can leave in the park overnight.
 
 === Prerequisites
@@ -27,7 +28,11 @@ Check if they were added to the database by adding `/list` to the main URL (inst
 === Install
 
 . Run `sudo make install`. That will copy the binary and template files to `/var/local/fieldday`.
-. Run `sudo make user`. That will create a user named `nfarl` and configure their environment (e.g. autostart of the browser in full screen mode, etc.).
+. Run `sudo make user`. That will create a user named `nfarl` with a password `fieldday`
+and configure their environment (e.g. autostart of the browser in full screen mode, etc.).
+Note: the script works with the Raspbian OS and LXDE desktop.
+In the 2024 deployment I decided to use Orange Pi Zero 3 with Debian 12 (Bookworm) and XFCE4.
+Setting the browser properly required some manual steps that I haven't automated yet.
 
 === Upgrade
 
@@ -47,8 +52,48 @@ This is a good instruction on how to configure it: https://pimylifeup.com/raspbe
 
 == Post-event processing
 
-Use the following instructions to convert the visitors data to CSV: https://www.sqlitetutorial.net/sqlite-export-csv/
+For the versions before 2024 I used SQLite.
+For SQLite use the following instructions to convert the visitors data to CSV: https://www.sqlitetutorial.net/sqlite-export-csv/
 
+In 2024 I switched to BoltDB and Storm so it will require a separate tool.
+I'll add it later.
+
+== Development history
+
+Originally I started this project to learn Django (a Python framework for web development).
+The Django versions can be found here: https://github.com/pavelanni/field_day and https://github.com/pavelanni/field_day3
+
+=== Field Day 2021
+
+I used Jon Calhoun's course (https://www.usegolang.com/) and created the first version of the application.
+This version used the Model-View-Controller approach, Gorilla web framework, and SQLite as a database with GORM.
+
+=== Field Day 2022
+
+I decided to simplify the application and switched from Gorilla to `net/http` from the standard library.
+My application is extremely simple so it's not worth it using a full-fledged web framework for it.
+I simplified the application structure too, switched from MVC to much simpler architecture.
+I'm still using `gorilla/schema` to parse the form.
+
+I started using GitHub actions to test and build the binary.
+
+=== Field Day 2023
+
+After FD 2022 I discovered that creation timestamps in the database were a bit off and figured out that the computer
+was turned off for the night and it couldn't get it from anywhere because there was no network in the field.
+I decided to add a real-time clock (with a battery) to the installation.
+
+I added a systemd service that would start the registration server and added those steps to the Makefile.
+
+=== Field Day 2024
+
+I decided to switch from SQLite to BoltDB.
+I started using BoltDB and Storm in a couple projects at work and it seemed reasonable to use it here.
+The main advantage is that because it doesn't need CGO (like `go-sqlite3` does) you 1) can compile the project much faster;
+2) can cross-compile it for ARM on your laptop, and 3) don't need GCC anymore.
+
+I created a `visitorstore` package and put all the store operations into it.
+If necessary, it's easy now to create a VisitorStore interface and implementations for various databases.
 
 
 
