@@ -3,7 +3,7 @@ package visitorstore
 import (
 	"testing"
 
-	"github.com/asdine/storm"
+	"github.com/asdine/storm/v3"
 )
 
 func TestSaveVisitor(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asdine/storm"
+	"github.com/asdine/storm/v3"
 )
 
 // Visitor contains information about Field Day visitors
