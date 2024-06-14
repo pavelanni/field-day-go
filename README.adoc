@@ -50,6 +50,22 @@ This is the one I added to my installation: https://www.amazon.com/Makerfire%C2%
 
 This is a good instruction on how to configure it: https://pimylifeup.com/raspberry-pi-rtc/.
 
+For Debian installation a found a good advice here: https://forum.armbian.com/topic/8838-external-rtc-ds1307-usage/
+
+----
+did you insert
+
+rtc-ds1307
+in /etc/modules?
+
+and
+
+echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-0/new_device
+hwclock -s
+
+in /etc/rc.local?
+----
+
 == Post-event processing
 
 For the versions before 2024 I used SQLite.
