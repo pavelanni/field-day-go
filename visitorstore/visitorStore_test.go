@@ -6,6 +6,49 @@ import (
 	"github.com/asdine/storm/v3"
 )
 
+func TestNewVisitorStore(t *testing.T) {
+	// Test case: successful database initialization
+	dbFile := "test.db"
+	vs, err := NewVisitorStore(dbFile)
+	if err != nil {
+		t.Errorf("NewVisitorStore() error = %v, want nil", err)
+	}
+	if vs == nil {
+		t.Errorf("NewVisitorStore() = nil, want non-nil")
+	}
+	if vs.db == nil {
+		t.Errorf("NewVisitorStore().db = nil, want non-nil")
+	}
+	vs.db.Close()
+
+	// Test case: error opening database
+	dbFile = "/var/lib/non-existent.db" // We can't access this file
+	vs, err = NewVisitorStore(dbFile)
+	if err == nil {
+		t.Errorf("NewVisitorStore() error = nil, want non-nil")
+	}
+	if vs != nil {
+		t.Errorf("NewVisitorStore() = %v, want nil", vs)
+	}
+
+	// Test case: error initializing database
+	db, err := storm.Open("test.db")
+	if err != nil {
+		t.Errorf("Failed to open BoltDB database: %v", err)
+	}
+	defer db.Close()
+	type InvalidVisitor struct { //Empty struct to test error
+	}
+
+	err = db.Init(&InvalidVisitor{})
+	if err == nil {
+		t.Errorf("NewVisitorStore() error = nil, want non-nil")
+	}
+	if vs != nil {
+		t.Errorf("NewVisitorStore() = %v, want nil", vs)
+	}
+}
+
 func TestSaveVisitor(t *testing.T) {
 	// Test case: Save a new visitor
 	db, err := storm.Open("test.db")
