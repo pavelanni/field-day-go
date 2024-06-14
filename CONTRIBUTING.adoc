@@ -1,0 +1,81 @@
+= Contributing to Visitor Registration Kiosk
+
+Thank you for considering contributing to our project!
+We welcome all contributions and appreciate your efforts to make our project better.
+New features, additional tests, documentation, or other improvements are welcome.
+Feel free to use this project as your own sandbox and learn some new development approaches in Go.
+
+Below are some guidelines to help you get started.
+
+== How to Contribute
+
+. *Fork the repository*: Click the "Fork" button at the top right of this page to create a copy of the repository on your GitHub account.
+
+. *Clone the repository*: Use the following command to clone the repository to your local machine:
++
+----
+git clone https://github.com/your-username/field-day-go.git
+----
+
+. *Create a branch*: Create a new branch for your feature or bug fix:
++
+----
+git checkout -b your-feature-branch
+----
+
+. *Make your changes*: Implement your feature, add tests, or fix the bug in your branch.
+
+. *Commit your changes*: Commit your changes with a clear and concise commit message:
++
+----
+git commit -m "Description of your changes"
+----
+
+. *Push to your branch*: Push your changes to your forked repository:
++
+----
+git push origin your-feature-branch
+----
+
+. *Create a Pull Request*: Open a pull request to the `main` branch of the original repository. Provide a clear description of the changes and any related issues.
+
+== Setting Up the Development Environment
+
+To set up your development environment, follow these steps:
+
+. *Install Go*: Ensure you have Go installed. You can download it from https://go.dev/doc/install[go.dev].
+
+. *Set up Go environment*: Configure your Go workspace. Add the following lines to your `.bashrc` or `.zshrc` file:
++
+----
+export GOPATH=$HOME/go
+export PATH=/usr/local/go/bin:$GOPATH/bin:$PATH
+----
+
+. *Get project dependencies*: Navigate to the project directory and run:
++
+----
+go mod tidy
+----
+
+. *Run the application*: Use the following command to run the application:
++
+----
+go run .
+----
++
+You will be able to access the application at http://localhost:3000
+
+
+== Additional Guidelines
+
+- *Code style*: Follow the Go coding standards. Ensure your code is well-documented and formatted.
+- *Testing*: Write tests for your code. Ensure all tests pass before submitting your pull request.
+- *Issues*: If you find a bug or have a feature request, please open an issue before starting to work on it.
+
+We appreciate your contributions and efforts to make this project better.
+If you have any questions, feel free to open an issue or contact the maintainers.
+
+Happy coding!
+
+Pavel AC4PA (North Fulton Amateur Radio League)
