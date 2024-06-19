@@ -60,11 +60,23 @@ in /etc/modules?
 
 and
 
-echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-0/new_device
+echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-3/new_device  # I changed it to i2c-3 for my Orange Pi device
 hwclock -s
 
 in /etc/rc.local?
 ----
+
+*2024-06-19*: after switching to Orange Pi Zero 3 with Debian 12 I had to make other changes to the RTC setup.
+When you add a new RTC device such as DS1307 and load its module it creates a new device called `/dev/rtc1`.
+I spent some time trying to figure out why my `hwclock` is lagging my system date (several seconds per minute).
+After changing several different RTC boards and their batteries I figured out the problem is not with the RTC board.
+
+To make `hwclock` read from the new device you should first write to that device with `hwclock -w --rtc /dev/rtc1` and then
+read from it with `hwclock -r --rtc /dev/rtc1`.
+
+To configure the system time synchronization you have to edit this file: `/usr/lib/udev/rules.d/85-hwclock.rules` and change
+`KERNEL==rtc0` to `KERNEL=rtc1`.
+Then `/usr/lib/udev/hwclock-set` will use this device to sync the system time.
 
 == Post-event processing
 
