@@ -12,6 +12,8 @@ import (
 
 var templateDir = "templates"
 var staticDir = "static"
+var port = "3000"
+var thisYear = "2025"
 
 type Server struct {
 	store *visitorstore.VisitorStore
@@ -33,8 +35,8 @@ func (s *Server) Run() error {
 	http.HandleFunc("/new", s.NewVisitorHandler)
 	http.HandleFunc("/confirmation", confirmHandler)
 	http.HandleFunc("/list", s.ListHandler)
-	log.Println("Listening on port 3000")
-	return http.ListenAndServe(":3000", nil)
+	log.Println("Listening on port " + port)
+	return http.ListenAndServe(":"+port, nil)
 }
 
 // Handlers
@@ -49,7 +51,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = tmpl.Execute(w, nil)
+	data := map[string]interface{}{"Year": thisYear}
+	err = tmpl.Execute(w, data)
 
 	if err != nil {
 		log.Fatal(err)
@@ -67,7 +70,8 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = tmpl.Execute(w, nil)
+	data := map[string]interface{}{"Year": thisYear}
+	err = tmpl.Execute(w, data)
 
 	if err != nil {
 		log.Fatal(err)
@@ -90,7 +94,8 @@ func (s *Server) ListHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = tmpl.Execute(w, visitors)
+	data := map[string]interface{}{"Visitors": visitors, "Year": thisYear}
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -109,7 +114,8 @@ func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Template parsing error", http.StatusInternalServerError)
 			return
 		}
-		err = tmpl.Execute(w, nil)
+		data := map[string]interface{}{"Year": thisYear}
+		err = tmpl.Execute(w, data)
 
 		if err != nil {
 			http.Error(w, "Template execution error", http.StatusInternalServerError)
