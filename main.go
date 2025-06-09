@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +16,12 @@ var templateDir = "templates"
 var staticDir = "static"
 var port = "3000"
 var thisYear = "2025"
+
+//go:embed templates/*
+var templatesFS embed.FS
+
+//go:embed static/css/* static/js/* static/NFARL_FD_2025.png static/nfarlLogoTransparentBackground_medium.gif
+var staticFS embed.FS
 
 type Server struct {
 	store *visitorstore.VisitorStore
@@ -28,8 +36,11 @@ func NewServer(dbFile string) (*Server, error) {
 }
 
 func (s *Server) Run() error {
-	fs := http.FileServer(http.Dir(staticDir))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	staticSub, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
 
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/new", s.NewVisitorHandler)
@@ -47,7 +58,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		templateDir + "/home.go.html",
 		templateDir + "/footer.go.html",
 	}
-	tmpl, err := template.ParseFiles(files...)
+	tmpl, err := template.ParseFS(templatesFS, files...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,7 +77,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 		templateDir + "/confirmation.go.html",
 		templateDir + "/footer.go.html",
 	}
-	tmpl, err := template.ParseFiles(files...)
+	tmpl, err := template.ParseFS(templatesFS, files...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +96,7 @@ func (s *Server) ListHandler(w http.ResponseWriter, r *http.Request) {
 		templateDir + "/list.go.html",
 		templateDir + "/footer.go.html",
 	}
-	tmpl, err := template.ParseFiles(files...)
+	tmpl, err := template.ParseFS(templatesFS, files...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -109,7 +120,7 @@ func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			templateDir + "/new.go.html",
 			templateDir + "/footer.go.html",
 		}
-		tmpl, err := template.ParseFiles(files...)
+		tmpl, err := template.ParseFS(templatesFS, files...)
 		if err != nil {
 			http.Error(w, "Template parsing error", http.StatusInternalServerError)
 			return
