@@ -51,7 +51,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := map[string]interface{}{"Year": thisYear}
+	data := map[string]any{"Year": thisYear}
 	err = tmpl.Execute(w, data)
 
 	if err != nil {
@@ -70,7 +70,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := map[string]interface{}{"Year": thisYear}
+	data := map[string]any{"Year": thisYear}
 	err = tmpl.Execute(w, data)
 
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *Server) ListHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := map[string]interface{}{"Visitors": visitors, "Year": thisYear}
+	data := map[string]any{"Visitors": visitors, "Year": thisYear}
 	err = tmpl.Execute(w, data)
 	if err != nil {
 		log.Fatal(err)
@@ -114,7 +114,11 @@ func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Template parsing error", http.StatusInternalServerError)
 			return
 		}
-		data := map[string]interface{}{"Year": thisYear}
+		totalVisitors, err := s.store.TotalVisitors()
+		if err != nil {
+			log.Fatal(err)
+		}
+		data := map[string]any{"Year": thisYear, "CurrentVisitor": totalVisitors + 1}
 		err = tmpl.Execute(w, data)
 
 		if err != nil {

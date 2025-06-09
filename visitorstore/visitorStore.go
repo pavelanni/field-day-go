@@ -54,3 +54,12 @@ func (vs *VisitorStore) ListVisitors() ([]Visitor, error) {
 	}
 	return visitors, nil
 }
+
+func (vs *VisitorStore) TotalVisitors() (int, error) {
+	var visitors []Visitor
+	err := vs.db.All(&visitors)
+	if err != nil {
+		return 0, err
+	}
+	return len(visitors), nil
+}
