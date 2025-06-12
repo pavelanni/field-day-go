@@ -1,8 +1,12 @@
 build:
-	go build -o fieldday main.go
+	/usr/local/go/bin/go build -o fieldday main.go
 
 stop:
-	systemctl stop fieldday
+	if systemctl list-units | grep fieldday; then \
+	    systemctl stop fieldday; \
+	else \
+	    echo "Service fieldday is not installed"; \
+	fi
 
 start:
 	systemctl daemon-reload
