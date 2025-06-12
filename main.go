@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gorilla/schema"
+	"github.com/pavelanni/field-day-go/morse"
 	"github.com/pavelanni/field-day-go/visitorstore"
 )
 
@@ -22,6 +23,8 @@ var templatesFS embed.FS
 
 //go:embed static/css/* static/js/* static/NFARL_FD_2025.png static/nfarlLogoTransparentBackground_medium.gif
 var staticFS embed.FS
+
+var morsePlayer = morse.NewPlayer(600, 15)
 
 type Server struct {
 	store *visitorstore.VisitorStore
@@ -152,6 +155,12 @@ func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.SaveVisitor(v); err != nil {
 		http.Error(w, "Visitor saving error; please return to the previous page", http.StatusInternalServerError)
 		return
+	}
+	if v.Callsign != "" {
+		err := morsePlayer.Play(v.Callsign)
+		if err != nil {
+			log.Printf("Error playing morse code: %v", err)
+		}
 	}
 	http.Redirect(w, r, "/confirmation", http.StatusSeeOther)
 }

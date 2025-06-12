@@ -1,6 +1,9 @@
 build:
 	go build -o fieldday main.go
 
+build-raspi:
+	GOOS=linux GOARCH=arm GOARM=7 go build -o fieldday main.go
+
 stop:
 	systemctl stop fieldday
 
