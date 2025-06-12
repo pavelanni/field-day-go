@@ -29,18 +29,19 @@ var morseCodeMap = map[rune]string{
 }
 
 type Player struct {
-	freq    int
-	wpm     int
-	samples morseAudio
+	audioContext *audio.Context
+	freq         int
+	wpm          int
+	samples      morseAudio
 }
 
 func NewPlayer(freq int, wpm int) *Player {
+	acontext := audio.NewContext(sampleRate)
 	samples := newMorseAudio(wpm, freq)
-	return &Player{freq: freq, wpm: wpm, samples: *samples}
+	return &Player{audioContext: acontext, freq: freq, wpm: wpm, samples: *samples}
 }
 
 func (p *Player) Play(text string) error {
-	acontext := audio.NewContext(sampleRate)
 
 	// Generate Morse code audio
 	samples, totalSamples := p.generateMorseAudio(text)
@@ -50,7 +51,10 @@ func (p *Player) Play(text string) error {
 	writeWavHeader(buf, totalSamples*2, sampleRate)
 	// Write PCM data
 	for _, sample := range samples {
-		binary.Write(buf, binary.LittleEndian, sample)
+		err := binary.Write(buf, binary.LittleEndian, sample)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Create a reader from the buffer
@@ -62,7 +66,7 @@ func (p *Player) Play(text string) error {
 		return err
 	}
 
-	player, err := acontext.NewPlayer(audioPlayer)
+	player, err := p.audioContext.NewPlayer(audioPlayer)
 	if err != nil {
 		return err
 	}
