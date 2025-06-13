@@ -5,17 +5,22 @@ build-raspi:
 	GOOS=linux GOARCH=arm GOARM=7 go build -o fieldday main.go
 
 stop:
-	systemctl stop fieldday
-
+        if systemctl list-units | grep fieldday; then \
+            systemctl stop fieldday; \
+        else \
+            echo "Service fieldday is not installed"; \
+        fi
 start:
 	systemctl daemon-reload
 	systemctl start fieldday
 
 install: stop
-	mkdir -p /var/local/fieldday
-	cp fieldday deploy/start.sh /var/local/fieldday
-	cp -a static/ templates/ /var/local/fieldday
-	cp deploy/fieldday.service /lib/systemd/system
+	mkdir -p /opt/fieldday
+	mkdir -p /var/lib/fieldday
+	chown -R nfarl:nfarl /var/lib/fieldday
+	chown -R nfarl:nfarl /opt/fieldday
+	cp fieldday /opt/fieldday
+	cp deploy/fieldday.service /etc/systemd/system
 	systemctl daemon-reload
 	systemctl start fieldday
 
