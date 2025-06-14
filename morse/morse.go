@@ -228,3 +228,23 @@ func writeWavHeader(w *bytes.Buffer, dataSize int, sampleRate int) {
 	w.Write([]byte("data"))
 	binary.Write(w, binary.LittleEndian, uint32(dataSize))
 }
+
+// GenerateWav generates a WAV file as a byte slice for the given text using default WPM and frequency.
+func GenerateWav(text string) ([]byte, error) {
+	const defaultWPM = 15
+	const defaultFreq = 600
+	// Create a Player (audioContext is not used here)
+	samples := newMorseAudio(defaultWPM, defaultFreq)
+	p := &Player{freq: defaultFreq, wpm: defaultWPM, samples: *samples}
+
+	audioSamples, totalSamples := p.generateMorseAudio(text)
+	buf := &bytes.Buffer{}
+	writeWavHeader(buf, totalSamples*2, sampleRate)
+	for _, sample := range audioSamples {
+		err := binary.Write(buf, binary.LittleEndian, sample)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}

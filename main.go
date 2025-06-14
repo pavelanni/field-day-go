@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/gorilla/schema"
@@ -14,7 +15,6 @@ import (
 )
 
 var templateDir = "templates"
-var staticDir = "static"
 var port = "3000"
 var thisYear = "2025"
 
@@ -23,8 +23,6 @@ var templatesFS embed.FS
 
 //go:embed static/css/* static/js/* static/NFARL_FD_2025.png static/nfarlLogoTransparentBackground_medium.gif
 var staticFS embed.FS
-
-var morsePlayer = morse.NewPlayer(600, 15)
 
 type Server struct {
 	store *visitorstore.VisitorStore
@@ -38,7 +36,7 @@ func NewServer(dbFile string) (*Server, error) {
 	return &Server{store}, nil
 }
 
-func (s *Server) Run() error {
+func (s *Server) run() error {
 	staticSub, err := fs.Sub(staticFS, "static")
 	if err != nil {
 		log.Fatal(err)
@@ -46,14 +44,15 @@ func (s *Server) Run() error {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
 
 	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/new", s.NewVisitorHandler)
+	http.HandleFunc("/new", s.newVisitorHandler)
 	http.HandleFunc("/confirmation", confirmHandler)
-	http.HandleFunc("/list", s.ListHandler)
+	http.HandleFunc("/list", s.listHandler)
+	http.HandleFunc("/morse-audio", morseAudioHandler)
 	log.Println("Listening on port " + port)
 	return http.ListenAndServe(":"+port, nil)
 }
 
-// Handlers
+// handlers
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
 		templateDir + "/bootstrap-refresh.go.html",
@@ -84,7 +83,9 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := map[string]any{"Year": thisYear}
+	callsign := r.URL.Query().Get("callsign")
+	name := r.URL.Query().Get("name")
+	data := map[string]any{"Year": thisYear, "Callsign": callsign, "Name": name}
 	err = tmpl.Execute(w, data)
 
 	if err != nil {
@@ -92,7 +93,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) ListHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) listHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
 		templateDir + "/bootstrap.go.html",
 		templateDir + "/header.go.html",
@@ -115,7 +116,9 @@ func (s *Server) ListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
+// Morse code is now played in the browser via generated WAV files served by the backend.
+// The morse package's Play method is retained for possible future CLI/desktop use.
+func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		files := []string{
 			templateDir + "/bootstrap.go.html",
@@ -156,13 +159,30 @@ func (s *Server) NewVisitorHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Visitor saving error; please return to the previous page", http.StatusInternalServerError)
 		return
 	}
-	if v.Callsign != "" {
-		err := morsePlayer.Play(v.Callsign)
-		if err != nil {
-			log.Printf("Error playing morse code: %v", err)
-		}
+	msg := v.Callsign
+	if msg != "" {
+		msg = msg + "  73"
+	} else {
+		msg = "73"
 	}
-	http.Redirect(w, r, "/confirmation", http.StatusSeeOther)
+	http.Redirect(w, r, "/confirmation?callsign="+url.QueryEscape(msg)+"&name="+url.QueryEscape(v.FirstName), http.StatusSeeOther)
+}
+
+// Handler to serve Morse code audio as WAV
+func morseAudioHandler(w http.ResponseWriter, r *http.Request) {
+	callsign := r.URL.Query().Get("callsign")
+	if callsign == "" {
+		http.Error(w, "Missing callsign parameter", http.StatusBadRequest)
+		return
+	}
+	audioData, err := morse.GenerateWav(callsign)
+	if err != nil {
+		http.Error(w, "Failed to generate audio", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "audio/wav")
+	w.Header().Set("Content-Disposition", "inline; filename=\"morse.wav\"")
+	w.Write(audioData)
 }
 
 func main() {
@@ -176,7 +196,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = server.Run()
+	err = server.run()
 	if err != nil {
 		log.Fatal(err)
 	}
