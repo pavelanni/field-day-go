@@ -3,11 +3,11 @@
 <html lang="en">
 
 <head>
-    <title>NFARL Field Day 2024</title>
+    <title>NFARL Field Day {{.Year}}</title>
     <link href="/static/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/css/fieldday.css">
-    <meta http-equiv="refresh" content="5;url=/new" />
+    <!-- <meta http-equiv="refresh" content="5;url=/new" /> -->
 </head>
 
 <body>
@@ -15,7 +15,7 @@
     <div class="container-fluid">
         {{template "header"}}
         {{template "content" .}}
-        {{template "footer"}}
+        {{template "footer" .}}
     </div>
 
 
@@ -23,6 +23,21 @@
     <script src="/static/js/bootstrap.bundle.min.js"
         integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
         crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var audio = document.querySelector("audio");
+        if (audio) {
+            audio.addEventListener("ended", function() {
+                window.location.href = "/new";
+            });
+        } else {
+            // If no audio, fallback to a timeout (e.g., 5 seconds)
+            setTimeout(function() {
+                window.location.href = "/new";
+            }, 5000);
+        }
+    });
+    </script>
 </body>
 
 </html>
