@@ -1,0 +1,37 @@
+{{ define "content"}}
+<div class="row justify-content-center mt-4">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card" style="max-width: 500px; margin: 0 auto;">
+            <div class="card-body text-start">
+                <h4 class="card-title text-center">Privacy Notice - NFARL Field Day {{.Year}}</h4>
+                <p>What information we collect:</p>
+                <ul>
+                    <li>Name (required for event registration)</li>
+                    <li>Amateur radio callsign (optional, if you have one)</li>
+                    <li>Email address (optional, only if you want to be contacted by our club)</li>
+                </ul>
+                <p>Why we collect this information:</p>
+                <ul>
+                    <li>To register your participation in our Field Day event</li>
+                    <li>To report participant numbers to ARRL as part of our Field Day submission</li>
+                    <li>To contact you about future club activities (only if you provide your email)</li>
+                </ul>
+                <p>How we protect your information:</p>
+                <ul>
+                    <li>Your data is transmitted securely using HTTPS protocol</li>
+                    <li>We do not share your personal information with any third parties</li>
+                    <li>All data will be deleted within 30 days after the event</li>
+                </ul>
+                <p>Your choices:</p>
+                <ul>
+                    <li>Providing your email address is completely optional</li>
+                    <li>You can contact us at president@nfarl.org if you have questions about your data</li>
+                </ul>
+                <div class="text-center mt-3">
+                    <a class="btn btn-primary" href="/new" role="button">Return</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
