@@ -10,9 +10,6 @@ Group=nfarl
 Type=simple
 ExecStart=/opt/fieldday/fieldday /var/lib/fieldday/fd2025.db
 Restart=on-abort
-# Pulse audio is used to play morse code audio
-# we need this to be able to share the audio device
-Environment="PULSE_SERVER=unix:/run/user/1002/pulse/native"
 
 [Install]
 WantedBy=multi-user.target
