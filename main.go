@@ -48,6 +48,7 @@ func (s *Server) run() error {
 	http.HandleFunc("/confirmation", confirmHandler)
 	http.HandleFunc("/list", s.listHandler)
 	http.HandleFunc("/morse-audio", morseAudioHandler)
+	http.HandleFunc("/privacy", privacyHandler)
 	log.Println("Listening on port " + port)
 	return http.ListenAndServe(":"+port, nil)
 }
@@ -65,8 +66,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	data := map[string]any{"Year": thisYear}
-	err = tmpl.Execute(w, data)
-
+	err = tmpl.ExecuteTemplate(w, "bootstrap-refresh", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,8 +86,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	callsign := r.URL.Query().Get("callsign")
 	name := r.URL.Query().Get("name")
 	data := map[string]any{"Year": thisYear, "Callsign": callsign, "Name": name}
-	err = tmpl.Execute(w, data)
-
+	err = tmpl.ExecuteTemplate(w, "bootstrap-refresh", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -136,8 +135,7 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		data := map[string]any{"Year": thisYear, "CurrentVisitor": totalVisitors + 1}
-		err = tmpl.Execute(w, data)
-
+		err = tmpl.ExecuteTemplate(w, "bootstrap", data)
 		if err != nil {
 			http.Error(w, "Template execution error", http.StatusInternalServerError)
 			return
@@ -183,6 +181,24 @@ func morseAudioHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "audio/wav")
 	w.Header().Set("Content-Disposition", "inline; filename=\"morse.wav\"")
 	w.Write(audioData)
+}
+
+func privacyHandler(w http.ResponseWriter, r *http.Request) {
+	files := []string{
+		templateDir + "/bootstrap-refresh-timeout.go.html",
+		templateDir + "/header.go.html",
+		templateDir + "/privacy.go.html",
+		templateDir + "/footer.go.html",
+	}
+	tmpl, err := template.ParseFS(templatesFS, files...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	data := map[string]any{"Year": thisYear}
+	err = tmpl.ExecuteTemplate(w, "bootstrap-refresh-timeout", data)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
