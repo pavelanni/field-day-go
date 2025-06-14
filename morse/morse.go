@@ -6,10 +6,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
-
-	"github.com/hajimehoshi/ebiten/v2/audio"
-	"github.com/hajimehoshi/ebiten/v2/audio/wav"
 )
 
 const (
@@ -29,20 +25,17 @@ var morseCodeMap = map[rune]string{
 }
 
 type Player struct {
-	audioContext *audio.Context
-	freq         int
-	wpm          int
-	samples      morseAudio
+	freq    int
+	wpm     int
+	samples morseAudio
 }
 
 func NewPlayer(freq int, wpm int) *Player {
-	acontext := audio.NewContext(sampleRate)
 	samples := newMorseAudio(wpm, freq)
-	return &Player{audioContext: acontext, freq: freq, wpm: wpm, samples: *samples}
+	return &Player{freq: freq, wpm: wpm, samples: *samples}
 }
 
 func (p *Player) Play(text string) error {
-
 	// Generate Morse code audio
 	samples, totalSamples := p.generateMorseAudio(text)
 
@@ -57,27 +50,7 @@ func (p *Player) Play(text string) error {
 		}
 	}
 
-	// Create a reader from the buffer
-	reader := bytes.NewReader(buf.Bytes())
-
-	// Play the sound
-	audioPlayer, err := wav.DecodeWithSampleRate(sampleRate, reader)
-	if err != nil {
-		return err
-	}
-
-	player, err := p.audioContext.NewPlayer(audioPlayer)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Playing '%s' in Morse code at %d WPM, %d Hz\n", text, p.wpm, p.freq)
-	player.Play()
-
-	// Calculate total duration and wait for playback to complete
-	totalDuration := time.Duration(float64(totalSamples) / float64(sampleRate) * float64(time.Second))
-	time.Sleep(totalDuration)
-
+	fmt.Printf("Generated '%s' in Morse code at %d WPM, %d Hz\n", text, p.wpm, p.freq)
 	return nil
 }
 
@@ -233,7 +206,7 @@ func writeWavHeader(w *bytes.Buffer, dataSize int, sampleRate int) {
 func GenerateWav(text string) ([]byte, error) {
 	const defaultWPM = 15
 	const defaultFreq = 600
-	// Create a Player (audioContext is not used here)
+	// Create a Player
 	samples := newMorseAudio(defaultWPM, defaultFreq)
 	p := &Player{freq: defaultFreq, wpm: defaultWPM, samples: *samples}
 
