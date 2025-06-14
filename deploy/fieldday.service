@@ -1,12 +1,14 @@
-# put this file in /lib/systemd/system
+# put this file in /etc/systemd/system/fieldday.service
 [Unit]
 Description=Field Day Registration Kiosk
 After=network.target remote-fs.target nss-lookup.target
 Documentation=https://github.com/pavelanni/field-day-go
 
 [Service]
+User=nfarl
+Group=nfarl
 Type=simple
-ExecStart=/var/local/fieldday/start.sh
+ExecStart=/opt/fieldday/fieldday /var/lib/fieldday/fd2025.db
 Restart=on-abort
 
 [Install]

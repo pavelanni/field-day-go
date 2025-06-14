@@ -6,9 +6,15 @@
             <div class="card-body">
                 <h5 class="card-title">Confirmation</h5>
                 <p>Thanks for registering
-                    at NFARL Field Day 2024!<br>
+                    at NFARL Field Day {{.Year}}, <b>{{.Name}}</b>!<br>
                     Please press the button to return to the registration page
                 </p>
+                {{if .Callsign}}
+                <audio controls autoplay>
+                  <source src="/morse-audio?callsign={{.Callsign}}" type="audio/wav">
+                  Your browser does not support the audio element.
+                </audio>
+                {{end}}
                 <a class="btn btn-primary" href="/new" role="button">Return</a>
             </div>
         </div>

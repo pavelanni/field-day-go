@@ -1,6 +1,8 @@
 module github.com/pavelanni/field-day-go
 
-go 1.22
+go 1.22.0
+
+toolchain go1.24.4
 
 require (
 	github.com/asdine/storm/v3 v3.2.1
@@ -9,5 +11,5 @@ require (
 
 require (
 	go.etcd.io/bbolt v1.3.4 // indirect
-	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 )
