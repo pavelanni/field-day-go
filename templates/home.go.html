@@ -1,10 +1,11 @@
 {{define "content"}}
-<div class="card text-center">
-    <div class="card-body">
-        <h4 class="card-title">Welcome to NFARL Field Day {{.Year}}!</h4>
-        <p>Please press the button below to register as a visitor.
-        </p>
-        <a class="btn btn-primary" href="/new" role="button">New Visitor</a>
+<div class="flex justify-center items-center min-h-[60vh]">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded shadow p-6 text-center">
+            <h4 class="text-xl font-semibold mb-2">Welcome to NFARL Field Day {{.Year}}!</h4>
+            <p class="mb-4">Please press the button below to register as a visitor.</p>
+            <a class="inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition" href="/new" role="button">New Visitor</a>
+        </div>
     </div>
 </div>
 {{end}}

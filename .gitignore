@@ -1,3 +1,4 @@
 *.db
 *.csv
 fieldday
+node_modules
