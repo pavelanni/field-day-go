@@ -1,14 +1,13 @@
-{{define "bootstrap-refresh"}}
+{{define "tailwind-refresh"}}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <title>NFARL Field Day {{.Year}}</title>
-    <!-- Tailwind is included in header template -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/css/tailwind.css" rel="stylesheet">
 </head>
-
 <body class="bg-gray-50 min-h-screen">
-    <div class="max-w-4xl mx-auto p-4">
+    <div class="w-full p-4">
         {{template "header"}}
         {{template "content" .}}
         {{template "footer" .}}
@@ -21,7 +20,6 @@
                 window.location.href = "/new";
             });
         } else {
-            // If no audio, fallback to a timeout (e.g., 5 seconds)
             setTimeout(function() {
                 window.location.href = "/new";
             }, 5000);
@@ -29,8 +27,7 @@
     });
     </script>
 </body>
-
 </html>
 {{end}}
 
-{{template "bootstrap-refresh" .}}
+{{template "tailwind-refresh" .}}

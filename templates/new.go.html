@@ -1,22 +1,39 @@
 {{define "content"}}
-<h2 class="text-2xl font-bold mb-4">Welcome to NFARL Field Day {{.Year}}!</h2>
-<div class="flex flex-col md:flex-row gap-6">
-    <div class="md:w-2/3 w-full">
+<div class="flex flex-col md:flex-row gap-6 mt-6">
+    <div class="md:basis-3/4 w-full">
+        <div class="flex items-center gap-4 mb-2">
+            <img src="/static/nfarlLogoTransparentBackground_medium.gif" alt="NFARL Logo" class="h-12 w-auto">
+            <h2 class="text-2xl font-bold">Welcome to NFARL Field Day {{.Year}}!</h2>
+        </div>
         <h4 class="text-lg font-semibold mb-2">Field Day Map</h4>
         <img src="/static/NFARL_FD_{{.Year}}.png" class="w-full rounded border mb-4" alt="Field Day Map {{.Year}}">
     </div>
-    <div class="md:w-1/3 w-full flex flex-col items-stretch">
-        <h3 class="text-lg font-semibold mb-2">Total Visitors By Year</h3>
-        <table class="min-w-full text-sm border mb-4">
-            <tbody>
-                <tr class="border-b"><td class="py-1 px-2">2021</td><td class="py-1 px-2">141 (#2 nationwide)</td></tr>
-                <tr class="border-b"><td class="py-1 px-2">2022</td><td class="py-1 px-2">111 (#4 nationwide)</td></tr>
-                <tr class="border-b"><td class="py-1 px-2">2023</td><td class="py-1 px-2">132 (#3 nationwide)</td></tr>
-                <tr><td class="py-1 px-2">2024</td><td class="py-1 px-2">96 (#11 nationwide)</td></tr>
-            </tbody>
-        </table>
+    <div class="md:basis-1/4 w-full flex flex-col items-stretch">
+        <div class="rounded-lg shadow bg-white overflow-hidden mb-4">
+            <h3 class="text-lg font-semibold p-4 bg-gray-50">Total Visitors By Year</h3>
+            <table class="min-w-full text-sm">
+                <tbody>
+                    <tr class="even:bg-gray-50 hover:bg-blue-50">
+                        <td class="px-4 py-2 border-b border-gray-200">2021</td>
+                        <td class="px-4 py-2 border-b border-gray-200"><b>141</b> (#2 nationwide)</td>
+                    </tr>
+                    <tr class="even:bg-gray-50 hover:bg-blue-50">
+                        <td class="px-4 py-2 border-b border-gray-200">2022</td>
+                        <td class="px-4 py-2 border-b border-gray-200"><b>111</b> (#4 nationwide)</td>
+                    </tr>
+                    <tr class="even:bg-gray-50 hover:bg-blue-50">
+                        <td class="px-4 py-2 border-b border-gray-200">2023</td>
+                        <td class="px-4 py-2 border-b border-gray-200"><b>132</b> (#3 nationwide)</td>
+                    </tr>
+                    <tr class="even:bg-gray-50 hover:bg-blue-50">
+                        <td class="px-4 py-2">2024</td>
+                        <td class="px-4 py-2"><b>96</b> (#11 nationwide)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <h3 class="text-md font-semibold mb-2">Let's get to the top again!</h3>
-        <h4 class="text-md mb-2">New visitor #{{.CurrentVisitor}}</h4>
+        <h4 class="text-md font-semibold mb-2">New visitor #{{.CurrentVisitor}}:</h4>
         {{template "signupForm"}}
     </div>
 </div>
@@ -61,42 +78,46 @@
 {{end}}
 
 {{define "signupForm"}}
-<form action="new" method="POST" class="space-y-4 bg-gray-50 p-4 rounded shadow">
+<form action="new" method="POST" class="space-y-2 bg-gray-50 p-4 rounded shadow text-base">
     <div>
-        <label for="firstname" class="block font-medium mb-1">First name (required)</label>
-        <input type="text" name="firstname" id="firstname" placeholder="First name (required)" required class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-400">
-    </div>
-    <div>
-        <label for="lastname" class="block font-medium mb-1">Last name</label>
-        <input type="text" name="lastname" id="lastname" placeholder="Last name" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-400">
+        <label for="firstname" class="block font-semibold mb-1">First name (required)</label>
+        <input type="text" name="firstname" id="firstname" placeholder="First name (required)" required class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
     </div>
     <div>
-        <label for="callsign" class="block font-medium mb-1">Call sign (optional)</label>
-        <input type="text" name="callsign" id="callsign" placeholder="Call sign" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-400">
+        <label for="lastname" class="block font-semibold mb-1">Last name (optional)</label>
+        <input type="text" name="lastname" id="lastname" placeholder="Last name" class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
     </div>
     <div>
-        <label for="email" class="block font-medium mb-1">Email address</label>
-        <input type="email" name="email" id="email" placeholder="Email" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-400">
-    </div>
-    <div class="flex items-center">
-        <input type="checkbox" name="nfarl" id="nfarl" class="mr-2">
-        <label for="nfarl">NFARL member?</label>
-    </div>
-    <div class="flex items-center">
-        <input type="checkbox" name="contactme" id="contactme" class="mr-2">
-        <label for="contactme">May we contact you?</label>
-    </div>
-    <div class="flex items-center">
-        <input type="checkbox" name="youth" id="youth" class="mr-2">
-        <label for="youth">Younger than 18?</label>
-    </div>
-    <div class="flex items-center">
-        <input type="checkbox" name="firsttime" id="firsttime" class="mr-2">
-        <label for="firsttime">First time at Field Day?</label>
+        <label for="callsign" class="block font-semibold mb-1">Call sign (if licensed)</label>
+        <input type="text" name="callsign" id="callsign" placeholder="Call sign" class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
     </div>
     <div>
-        <p class="text-xs text-gray-600">By clicking the Submit button, you agree to the <a href="/privacy" class="underline text-blue-600">privacy policy</a></p>
+        <label for="email" class="block font-semibold mb-1">Email address (if you want to be contacted)</label>
+        <input type="email" name="email" id="email" placeholder="Email" class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
     </div>
-    <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition">Submit</button>
+    <div class="space-y-1 mt-1">
+        <div class="flex items-center gap-2">
+            <input type="checkbox" name="nfarl" id="nfarl" class="h-5 w-5 mr-2 align-middle">
+            <label for="nfarl" class="text-gray-800 cursor-pointer select-none align-middle">NFARL member?</label>
+        </div>
+        <div class="flex items-center gap-2">
+            <input type="checkbox" name="contactme" id="contactme" class="h-5 w-5 mr-2 align-middle">
+            <label for="contactme" class="text-gray-800 cursor-pointer select-none align-middle">May we contact you?</label>
+        </div>
+        <div class="flex items-center gap-2">
+            <input type="checkbox" name="youth" id="youth" class="h-5 w-5 mr-2 align-middle">
+            <label for="youth" class="text-gray-800 cursor-pointer select-none align-middle">Younger than 18?</label>
+        </div>
+        <div class="flex items-center gap-2">
+            <input type="checkbox" name="firsttime" id="firsttime" class="h-5 w-5 mr-2 align-middle">
+            <label for="firsttime" class="text-gray-800 cursor-pointer select-none align-middle">First time at Field Day?</label>
+        </div>
+    </div>
+    <div>
+        <p class="text-sm text-gray-600 mt-1">By clicking the Submit button, you agree to the <a href="/privacy" class="underline text-blue-600 hover:text-blue-800">privacy policy</a></p>
+    </div>
+    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-1.5 px-3 rounded text-base hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        Submit
+    </button>
 </form>
 {{end}}
