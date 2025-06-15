@@ -56,7 +56,7 @@ func (s *Server) run() error {
 // handlers
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
-		templateDir + "/bootstrap-refresh.go.html",
+		templateDir + "/tailwind-refresh.go.html",
 		templateDir + "/header.go.html",
 		templateDir + "/home.go.html",
 		templateDir + "/footer.go.html",
@@ -66,7 +66,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	data := map[string]any{"Year": thisYear}
-	err = tmpl.ExecuteTemplate(w, "bootstrap-refresh", data)
+	err = tmpl.ExecuteTemplate(w, "tailwind-refresh", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
-		templateDir + "/bootstrap-refresh.go.html",
+		templateDir + "/tailwind-refresh.go.html",
 		templateDir + "/header.go.html",
 		templateDir + "/confirmation.go.html",
 		templateDir + "/footer.go.html",
@@ -86,7 +86,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 	callsign := r.URL.Query().Get("callsign")
 	name := r.URL.Query().Get("name")
 	data := map[string]any{"Year": thisYear, "Callsign": callsign, "Name": name}
-	err = tmpl.ExecuteTemplate(w, "bootstrap-refresh", data)
+	err = tmpl.ExecuteTemplate(w, "tailwind-refresh", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func confirmHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
-		templateDir + "/bootstrap.go.html",
+		templateDir + "/tailwind.go.html",
 		templateDir + "/header.go.html",
 		templateDir + "/list.go.html",
 		templateDir + "/footer.go.html",
@@ -109,7 +109,7 @@ func (s *Server) listHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	data := map[string]any{"Visitors": visitors, "Year": thisYear}
-	err = tmpl.Execute(w, data)
+	err = tmpl.ExecuteTemplate(w, "tailwind", data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func (s *Server) listHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		files := []string{
-			templateDir + "/bootstrap.go.html",
+			templateDir + "/tailwind.go.html",
 			templateDir + "/header.go.html",
 			templateDir + "/new.go.html",
 			templateDir + "/footer.go.html",
@@ -135,7 +135,7 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		data := map[string]any{"Year": thisYear, "CurrentVisitor": totalVisitors + 1}
-		err = tmpl.ExecuteTemplate(w, "bootstrap", data)
+		err = tmpl.ExecuteTemplate(w, "tailwind", data)
 		if err != nil {
 			http.Error(w, "Template execution error", http.StatusInternalServerError)
 			return
@@ -185,7 +185,7 @@ func morseAudioHandler(w http.ResponseWriter, r *http.Request) {
 
 func privacyHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
-		templateDir + "/bootstrap-refresh-timeout.go.html",
+		templateDir + "/tailwind-refresh-timeout.go.html",
 		templateDir + "/header.go.html",
 		templateDir + "/privacy.go.html",
 		templateDir + "/footer.go.html",
@@ -195,7 +195,7 @@ func privacyHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	data := map[string]any{"Year": thisYear}
-	err = tmpl.ExecuteTemplate(w, "bootstrap-refresh-timeout", data)
+	err = tmpl.ExecuteTemplate(w, "tailwind-refresh-timeout", data)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,25 +1,19 @@
 {{define "content"}}
-<div class="row">
-    <div class="col-md-4"></div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title">Confirmation</h5>
-                <p>Thanks for registering
-                    at NFARL Field Day {{.Year}}, <b>{{.Name}}</b>!<br>
-                    Please press the button to return to the registration page
-                </p>
-                {{if .Callsign}}
-                <audio controls autoplay>
-                  <source src="/morse-audio?callsign={{.Callsign}}" type="audio/wav">
-                  Your browser does not support the audio element.
-                </audio>
-                {{end}}
-                <a class="btn btn-primary" href="/new" role="button">Return</a>
-            </div>
+<div class="flex justify-center items-center min-h-[60vh]">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded shadow p-6 text-center">
+            <h5 class="text-xl font-semibold mb-2">Confirmation</h5>
+            <p class="mb-4">Thanks for registering at NFARL Field Day {{.Year}}, <b>{{.Name}}</b>!<br>
+                Please press the button to return to the registration page
+            </p>
+            {{if .Callsign}}
+            <audio controls autoplay class="mx-auto mb-4">
+              <source src="/morse-audio?callsign={{.Callsign}}" type="audio/wav">
+              Your browser does not support the audio element.
+            </audio>
+            {{end}}
+            <a class="inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition" href="/new" role="button">Return</a>
         </div>
     </div>
-    <div class="col-md-4"></div>
-
 </div>
 {{end}}
