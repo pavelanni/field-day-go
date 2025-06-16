@@ -18,7 +18,14 @@ install: stop
 	sudo cp fieldday /opt/fieldday
 	sudo cp deploy/fieldday.service /etc/systemd/system
 	sudo systemctl daemon-reload
+	sudo systemctl enable fieldday
 	sudo systemctl start fieldday
+	@if command -v getenforce >/dev/null 2>&1 && [ "$$(getenforce)" = "Enforcing" ]; then \
+		echo "SELinux is enforcing, setting httpd_can_network_connect"; \
+		sudo setsebool -P httpd_can_network_connect 1; \
+	else \
+		echo "SELinux is not enforcing or not installed, skipping setsebool"; \
+	fi
 
 user:
 	sudo deploy/mkuser.sh
