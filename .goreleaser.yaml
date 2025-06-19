@@ -1,0 +1,38 @@
+version: 2
+project_name: fieldday
+builds:
+- id: fieldday
+  main: ./main.go
+  binary: fieldday
+  goos:
+  - linux
+  - darwin
+  goarch:
+  - amd64
+  - arm64
+  - arm
+  goarm:
+  - 7
+  ignore:
+  - goos: darwin
+    goarch: arm
+  - goos: linux
+    goarch: arm64
+  - goos: darwin
+    goarch: amd64
+archives:
+- id: default
+  ids:
+  - fieldday
+  formats: tar.gz
+  name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+  files:
+  - README.md
+  - LICENSE
+  - deploy/fieldday.service
+checksum:
+  name_template: "checksums.txt"
+release:
+  github:
+    owner: pavelanni
+    name: field-day-go
