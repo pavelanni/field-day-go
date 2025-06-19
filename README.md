@@ -34,7 +34,7 @@ The application is usually deployed on a Raspberry Pi or compatible boards. It c
 - Git CLI
 - `sudo` access on the target host
 
-### Build
+### Build with Makefile
 
 1. Clone this repo on the target computer and `cd` into that directory.
 2. Run `make build`. That will create a binary in the root directory.
@@ -42,7 +42,61 @@ The application is usually deployed on a Raspberry Pi or compatible boards. It c
    Open the browser with the URL `http://localhost:8080` and enter one or two visitors.
    Check if they were added to the database by adding `/list` to the main URL (instead of `/new`).
 
-### Install
+---
+
+### Build with GoReleaser
+
+This project uses [GoReleaser](https://goreleaser.com/) to automate building and packaging binaries for multiple platforms.
+
+#### Prerequisites
+
+- [GoReleaser](https://goreleaser.com/install/) installed (`brew install goreleaser` on macOS, or see the [official docs](https://goreleaser.com/install/) for other platforms)
+- Go 1.18 or newer installed
+- (Optional) GitHub CLI (`gh`) for creating releases
+
+#### Building Locally (Test Mode)
+
+To build and package the binaries locally without publishing a release, run:
+
+```sh
+goreleaser release --snapshot --clean
+```
+
+This will:
+
+- Build binaries for Linux x86_64, Linux ARMv7, and macOS ARM64
+- Package them into tar.gz archives in the `dist/` directory
+
+#### Creating a Release
+
+To create a full release and publish it to GitHub:
+
+1. Commit all your changes and tag your release:
+
+   ```sh
+   git tag v1.0.0  # Replace with your version
+   git push origin v1.0.0
+   ```
+
+2. Run GoReleaser:
+
+   ```sh
+   goreleaser release --clean
+   ```
+
+   This will:
+   - Build and package binaries for all supported platforms
+   - Create a GitHub release and upload the archives and checksums
+
+> **Note:** You need a `GITHUB_TOKEN` environment variable set with permissions to create releases. You can generate a token in your GitHub account settings.
+
+#### Customizing the Build
+
+You can adjust the build targets and included files by editing the `.goreleaser.yaml` file in the project root.
+
+---
+
+## Install
 
 1. Run `make install`. That will copy the binary to `/opt/fieldday`. The binary includes all templates and static files embedded.
 2. Run `make user`. That will create a user named `nfarl` with the password `fieldday` and configure their environment (e.g., autostart of the browser in full screen mode, etc.).
