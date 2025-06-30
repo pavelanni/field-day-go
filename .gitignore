@@ -4,3 +4,4 @@ fieldday
 node_modules
 .DS_Store
 dist/
+results/
