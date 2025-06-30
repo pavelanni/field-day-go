@@ -114,7 +114,16 @@ You can adjust the build targets and included files by editing the `.goreleaser.
 
 For versions before 2024, I used SQLite. For SQLite, use the following instructions to convert the visitor data to CSV: [https://www.sqlitetutorial.net/sqlite-export-csv/](https://www.sqlitetutorial.net/sqlite-export-csv/)
 
-In 2024, I switched to BoltDB and Storm, so it will require a separate tool. I'll add it later. Currently, you can use the `/list` URL to view the list of visitors in HTML format.
+In 2024, I switched to BoltDB and Storm, so it needs a new tool.
+Currently it requires Go to be installed on your machine. I'll add a standalone binary in the future.
+
+Run it with the following command from the root of the project:
+
+```sh
+go run cmd/exportbolt/main.go --db results/fd2025.db --out results/fd2025.csv
+```
+
+The output will be saved to the `results/fd2025.csv` file.
 
 ---
 
