@@ -63,7 +63,7 @@ func (vs *VisitorStore) SaveVisitor(v Visitor) error {
 	query := `INSERT INTO visitors (created_at, first_name, last_name, callsign, email, nfarl, contactme, youth, firsttime)
 			  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	
-	_, err := vs.db.Exec(query, v.CreatedAt, v.FirstName, v.LastName, v.Callsign, v.Email, v.Nfarl, v.Contactme, v.Youth, v.Firsttime)
+	_, err := vs.db.Exec(query, v.CreatedAt.Format(time.RFC3339), v.FirstName, v.LastName, v.Callsign, v.Email, v.Nfarl, v.Contactme, v.Youth, v.Firsttime)
 	return err
 }
 func (vs *VisitorStore) ListVisitors() ([]Visitor, error) {
@@ -79,10 +79,18 @@ func (vs *VisitorStore) ListVisitors() ([]Visitor, error) {
 	var visitors []Visitor
 	for rows.Next() {
 		var v Visitor
-		err := rows.Scan(&v.ID, &v.CreatedAt, &v.FirstName, &v.LastName, &v.Callsign, &v.Email, &v.Nfarl, &v.Contactme, &v.Youth, &v.Firsttime)
+		var createdAtStr string
+		err := rows.Scan(&v.ID, &createdAtStr, &v.FirstName, &v.LastName, &v.Callsign, &v.Email, &v.Nfarl, &v.Contactme, &v.Youth, &v.Firsttime)
 		if err != nil {
 			return nil, err
 		}
+		
+		// Parse the timestamp string back to time.Time
+		v.CreatedAt, err = time.Parse(time.RFC3339, createdAtStr)
+		if err != nil {
+			return nil, err
+		}
+		
 		visitors = append(visitors, v)
 	}
 	
@@ -106,7 +114,7 @@ func (vs *VisitorStore) TotalVisitors() (int, error) {
 func (vs *VisitorStore) initSchema() error {
 	query := `CREATE TABLE IF NOT EXISTS visitors (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		created_at DATETIME NOT NULL,
+		created_at TEXT NOT NULL,
 		first_name TEXT NOT NULL,
 		last_name TEXT,
 		callsign TEXT,
