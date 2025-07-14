@@ -16,12 +16,12 @@ import (
 
 var templateDir = "templates"
 var port = "3000"
-var thisYear = "2025"
+var thisYear = "2026"
 
 //go:embed templates/*
 var templatesFS embed.FS
 
-//go:embed static/css/* static/js/* static/NFARL_FD_2025.png static/nfarlLogoTransparentBackground_medium.gif
+//go:embed static/css/* static/js/* static/NFARL_FD_2026.png static/nfarlLogoTransparentBackground_medium.gif
 var staticFS embed.FS
 
 type Server struct {
