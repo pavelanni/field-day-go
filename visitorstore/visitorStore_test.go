@@ -1,96 +1,97 @@
 package visitorstore
 
 import (
+	"os"
 	"testing"
-
-	"github.com/asdine/storm/v3"
+	"time"
 )
 
 func TestNewVisitorStore(t *testing.T) {
 	// Test case: successful database initialization
-	dbFile := "test.db"
+	dbFile := "test_new.db"
+	defer os.Remove(dbFile) // Clean up
+	
 	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
 		t.Errorf("NewVisitorStore() error = %v, want nil", err)
+		return
 	}
 	if vs == nil {
 		t.Errorf("NewVisitorStore() = nil, want non-nil")
+		return
 	}
 	if vs.db == nil {
 		t.Errorf("NewVisitorStore().db = nil, want non-nil")
+		return
 	}
 	vs.db.Close()
 
-	// Test case: error opening database
-	dbFile = "/var/lib/non-existent.db" // We can't access this file
+	// Test case: invalid database path
+	dbFile = "/invalid/path/test.db"
 	vs, err = NewVisitorStore(dbFile)
 	if err == nil {
-		t.Errorf("NewVisitorStore() error = nil, want non-nil")
+		t.Errorf("NewVisitorStore() error = nil, want non-nil for invalid path")
 	}
 	if vs != nil {
-		t.Errorf("NewVisitorStore() = %v, want nil", vs)
-	}
-
-	// Test case: error initializing database
-	db, err := storm.Open("test.db")
-	if err != nil {
-		t.Errorf("Failed to open BoltDB database: %v", err)
-	}
-	defer db.Close()
-	type InvalidVisitor struct { //Empty struct to test error
-	}
-
-	err = db.Init(&InvalidVisitor{})
-	if err == nil {
-		t.Errorf("NewVisitorStore() error = nil, want non-nil")
-	}
-	if vs != nil {
-		t.Errorf("NewVisitorStore() = %v, want nil", vs)
+		t.Errorf("NewVisitorStore() = %v, want nil for invalid path", vs)
 	}
 }
 
 func TestSaveVisitor(t *testing.T) {
-	// Test case: Save a new visitor
-	db, err := storm.Open("test.db")
+	dbFile := "test_save.db"
+	defer os.Remove(dbFile)
+	
+	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
-		t.Fatalf("Failed to open in-memory database: %v", err)
+		t.Fatalf("Failed to create visitor store: %v", err)
 	}
-	defer db.Close()
+	defer vs.db.Close()
 
-	vs := &VisitorStore{db}
-	v := Visitor{ID: 1, FirstName: "John", LastName: "Doe", Email: "john.doe@example.com"}
+	// Test case: Save a valid visitor
+	v := Visitor{
+		FirstName: "John",
+		LastName:  "Doe",
+		Email:     "john.doe@example.com",
+		Callsign:  "W1AW",
+		CreatedAt: time.Now(),
+	}
 	err = vs.SaveVisitor(v)
 	if err != nil {
 		t.Errorf("Failed to save visitor: %v", err)
 	}
 
-	// Test case: Save an existing visitor
-	v.ID = 1
-	err = vs.SaveVisitor(v)
-	if err != nil {
-		t.Errorf("Failed to save visitor: %v", err)
+	// Test case: Save visitor with missing required field
+	v = Visitor{
+		LastName: "Doe",
+		Email:    "test@example.com",
 	}
-
-	// Test case: Save a visitor with missing fields
-	v = Visitor{}
 	err = vs.SaveVisitor(v)
 	if err == nil {
-		t.Error("Expected error when saving visitor with missing fields")
+		t.Error("Expected error when saving visitor with missing FirstName")
 	}
-	err = vs.db.Drop(&v)
+
+	// Test case: Save visitor with CreatedAt auto-populated
+	v = Visitor{
+		FirstName: "Jane",
+		LastName:  "Smith",
+	}
+	err = vs.SaveVisitor(v)
 	if err != nil {
-		t.Errorf("Failed to drop bucket Visitor: %v", err)
+		t.Errorf("Failed to save visitor with auto-populated CreatedAt: %v", err)
 	}
 }
 
 func TestListVisitors(t *testing.T) {
-	// Test case: empty visitor list
-	db, err := storm.Open("test.db")
+	dbFile := "test_list.db"
+	defer os.Remove(dbFile)
+	
+	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to create visitor store: %v", err)
 	}
-	defer db.Close()
-	vs := &VisitorStore{db: db}
+	defer vs.db.Close()
+
+	// Test case: empty visitor list
 	visitors, err := vs.ListVisitors()
 	if err != nil {
 		t.Errorf("ListVisitors() error = %v, want nil", err)
@@ -100,8 +101,9 @@ func TestListVisitors(t *testing.T) {
 	}
 
 	// Test case: non-empty visitor list
-	visitor1 := Visitor{ID: 1, FirstName: "Alice", LastName: "Smith"}
-	visitor2 := Visitor{ID: 2, FirstName: "Bob", LastName: "Johnson"}
+	visitor1 := Visitor{FirstName: "Alice", LastName: "Smith", CreatedAt: time.Now()}
+	visitor2 := Visitor{FirstName: "Bob", LastName: "Johnson", CreatedAt: time.Now()}
+	
 	err = vs.SaveVisitor(visitor1)
 	if err != nil {
 		t.Fatal(err)
@@ -110,31 +112,125 @@ func TestListVisitors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	
 	visitors, err = vs.ListVisitors()
 	if err != nil {
 		t.Errorf("ListVisitors() error = %v, want nil", err)
 	}
 	if len(visitors) != 2 {
-		t.Errorf("ListVisitors() = %v, want slice of length 2", visitors)
+		t.Errorf("ListVisitors() = %d visitors, want 2", len(visitors))
 	}
-	if visitors[0].ID != visitor1.ID || visitors[0].FirstName != visitor1.FirstName || visitors[0].LastName != visitor1.LastName {
-		t.Errorf("ListVisitors()[0] = %v, want %v", visitors[0], visitor1)
+	
+	// Verify visitors are ordered by ID
+	if visitors[0].ID != 1 || visitors[0].FirstName != "Alice" {
+		t.Errorf("ListVisitors()[0] = %+v, want Alice with ID 1", visitors[0])
 	}
-	if visitors[1].ID != visitor2.ID || visitors[1].FirstName != visitor2.FirstName || visitors[1].LastName != visitor2.LastName {
-		t.Errorf("ListVisitors()[1] = %v, want %v", visitors[1], visitor2)
+	if visitors[1].ID != 2 || visitors[1].FirstName != "Bob" {
+		t.Errorf("ListVisitors()[1] = %+v, want Bob with ID 2", visitors[1])
+	}
+}
+
+func TestTotalVisitors(t *testing.T) {
+	dbFile := "test_total.db"
+	defer os.Remove(dbFile)
+	
+	vs, err := NewVisitorStore(dbFile)
+	if err != nil {
+		t.Fatalf("Failed to create visitor store: %v", err)
+	}
+	defer vs.db.Close()
+
+	// Test case: empty database
+	total, err := vs.TotalVisitors()
+	if err != nil {
+		t.Errorf("TotalVisitors() error = %v, want nil", err)
+	}
+	if total != 0 {
+		t.Errorf("TotalVisitors() = %d, want 0", total)
 	}
 
-	// Test case: error from db.AllByIndex
-	err = vs.db.Drop(&visitor1)
-	if err != nil {
-		t.Fatal(err)
+	// Test case: after adding visitors
+	visitors := []Visitor{
+		{FirstName: "Alice", LastName: "Smith", CreatedAt: time.Now()},
+		{FirstName: "Bob", LastName: "Johnson", CreatedAt: time.Now()},
+		{FirstName: "Charlie", LastName: "Brown", CreatedAt: time.Now()},
 	}
-	err = vs.db.Close()
-	if err != nil {
-		t.Fatal(err)
+	
+	for _, v := range visitors {
+		err = vs.SaveVisitor(v)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	_, err = vs.ListVisitors()
+	
+	total, err = vs.TotalVisitors()
+	if err != nil {
+		t.Errorf("TotalVisitors() error = %v, want nil", err)
+	}
+	if total != 3 {
+		t.Errorf("TotalVisitors() = %d, want 3", total)
+	}
+}
+
+func TestImportFromCSV(t *testing.T) {
+	dbFile := "test_import.db"
+	defer os.Remove(dbFile)
+	
+	vs, err := NewVisitorStore(dbFile)
+	if err != nil {
+		t.Fatalf("Failed to create visitor store: %v", err)
+	}
+	defer vs.db.Close()
+
+	// Create a test CSV file
+	csvFile := "test_data.csv"
+	csvContent := `Callsign,Contactme,CreatedAt,Email,FirstName,Firsttime,ID,LastName,Nfarl,Youth,id
+W1AW,true,2025-06-28T10:30:35.463982438-04:00,w1aw@arrl.org,Test,false,1,User,true,false,
+N0CALL,false,2025-06-28T10:35:09.316541124-04:00,,Example,true,2,Person,false,true,
+`
+	err = os.WriteFile(csvFile, []byte(csvContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test CSV file: %v", err)
+	}
+	defer os.Remove(csvFile)
+
+	// Test CSV import
+	err = vs.ImportFromCSV(csvFile)
+	if err != nil {
+		t.Errorf("ImportFromCSV() error = %v, want nil", err)
+	}
+
+	// Verify imported data
+	total, err := vs.TotalVisitors()
+	if err != nil {
+		t.Errorf("TotalVisitors() after import error = %v", err)
+	}
+	if total != 2 {
+		t.Errorf("TotalVisitors() after import = %d, want 2", total)
+	}
+
+	visitors, err := vs.ListVisitors()
+	if err != nil {
+		t.Errorf("ListVisitors() after import error = %v", err)
+	}
+	
+	if len(visitors) != 2 {
+		t.Fatalf("Expected 2 visitors, got %d", len(visitors))
+	}
+
+	// Check first visitor
+	if visitors[0].FirstName != "Test" || visitors[0].Callsign != "W1AW" {
+		t.Errorf("First visitor = %+v, want Test/W1AW", visitors[0])
+	}
+	
+	// Check second visitor
+	if visitors[1].FirstName != "Example" || visitors[1].Youth != true {
+		t.Errorf("Second visitor = %+v, want Example with Youth=true", visitors[1])
+	}
+
+	// Test case: non-existent CSV file
+	err = vs.ImportFromCSV("nonexistent.csv")
 	if err == nil {
-		t.Errorf("ListVisitors() error = nil, want non-nil")
+		t.Error("ImportFromCSV() with non-existent file should return error")
 	}
 }
