@@ -28,7 +28,7 @@ type Visitor struct {
 }
 
 type VisitorStore struct {
-	db *sql.DB
+    db *sql.DB
 }
 
 func NewVisitorStore(dbFile string) (*VisitorStore, error) {
@@ -108,6 +108,11 @@ func (vs *VisitorStore) TotalVisitors() (int, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+// HealthCheck verifies DB connectivity.
+func (vs *VisitorStore) HealthCheck() error {
+    return vs.db.Ping()
 }
 
 // initSchema creates the visitors table if it doesn't exist
