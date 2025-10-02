@@ -1,0 +1,50 @@
+# Markdown linting rules for Field Day Registration Kiosk
+# Configuration for markdownlint-cli2
+
+# Enable all rules by default
+default: true
+
+# Rule customizations
+MD013: # Line length
+  line_length: 120  # Allow longer lines for technical content
+  code_blocks: false  # Don't check line length in code blocks
+  tables: false      # Don't check line length in tables
+  headings: false    # Don't check line length in headings
+
+MD033: # No inline HTML
+  allowed_elements:  # Allow these HTML elements when needed
+    - br
+    - sup
+    - sub
+    - kbd
+
+MD041: # First line in file should be a top level header
+  front_matter_title: "^\\s*title\\s*[:=]"  # Allow front matter
+
+MD046: # Code block style
+  style: "fenced"  # Prefer fenced code blocks (```) over indented
+
+MD024: false # Multiple headings with the same content allowed
+
+MD025: false # Multiple top-level headings allowed
+
+# Disable some rules that conflict with our style
+MD026: false  # Trailing punctuation in headings (we sometimes use colons)
+MD034: false  # Bare URLs (sometimes needed for references)
+MD036: false  # Emphasis used instead of heading (false positives with **bold**)
+
+# Rules for lists
+MD004: # Unordered list style
+  style: "dash"  # Use - for unordered lists
+
+MD029: # Ordered list style
+  style: "one"   # Use 1. for all ordered list items
+
+MD007: # Unordered list indentation
+  indent: 2  # Use 2 spaces for indentation
+
+MD030: # Spaces after list markers
+  ul_single: 1    # 1 space after - in single-line list items
+  ul_multi: 1     # 1 space after - in multi-line list items
+  ol_single: 1    # 1 space after number in single-line list items
+  ol_multi: 1     # 1 space after number in multi-line list items
