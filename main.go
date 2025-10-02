@@ -202,6 +202,24 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
     if err := s.store.SaveVisitor(v); err != nil {
+        // Check if it's a validation error
+        if valErr, ok := err.(*visitorstore.ValidationError); ok {
+            // Return HTTP 400 with validation error message
+            w.WriteHeader(http.StatusBadRequest)
+            tmpl := s.templates["new"]
+            totalVisitors, _ := s.store.TotalVisitors()
+            data := map[string]any{
+                "Year":           s.year,
+                "CurrentVisitor": totalVisitors + 1,
+                "Error":          valErr.Error(),
+            }
+            if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
+                http.Error(w, "Template execution error", http.StatusInternalServerError)
+                log.Printf("newVisitorHandler template error: %v", err)
+            }
+            return
+        }
+        // Other errors (database, etc.)
         http.Error(w, "Visitor saving error; please return to the previous page", http.StatusInternalServerError)
         log.Printf("newVisitorHandler save error: %v", err)
         return

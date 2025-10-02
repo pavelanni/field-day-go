@@ -6,12 +6,28 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
+
+var (
+	callsignRegex = regexp.MustCompile(`^[A-Z0-9]{1,3}[0-9][A-Z]{1,4}(/[A-Z0-9]+)?$`)
+	emailRegex    = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+)
+
+// ValidationError represents a field-specific validation error
+type ValidationError struct {
+	Field   string
+	Message string
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Field, e.Message)
+}
 
 // Visitor contains information about Field Day visitors
 type Visitor struct {
@@ -25,6 +41,63 @@ type Visitor struct {
 	Contactme bool      `schema:"contactme"`
 	Youth     bool      `schema:"youth"`
 	Firsttime bool      `schema:"firsttime"`
+}
+
+// ValidateCallsign validates the callsign field format
+func (v *Visitor) ValidateCallsign() error {
+	// Normalize: trim and uppercase
+	callsign := strings.ToUpper(strings.TrimSpace(v.Callsign))
+
+	// Empty callsign is valid (optional field)
+	if callsign == "" {
+		return nil
+	}
+
+	// Validate format
+	if !callsignRegex.MatchString(callsign) {
+		return &ValidationError{
+			Field:   "Callsign",
+			Message: "Callsign must be in amateur radio format (e.g., W1AW, KB6NU/M)",
+		}
+	}
+
+	return nil
+}
+
+// ValidateEmail validates the email field format
+func (v *Visitor) ValidateEmail() error {
+	// Normalize: trim and lowercase
+	email := strings.ToLower(strings.TrimSpace(v.Email))
+
+	// Empty email is valid (optional field)
+	if email == "" {
+		return nil
+	}
+
+	// Validate format
+	if !emailRegex.MatchString(email) {
+		return &ValidationError{
+			Field:   "Email",
+			Message: "Email address must be in valid format (e.g., user@example.com)",
+		}
+	}
+
+	return nil
+}
+
+// Validate validates all Visitor fields, returns first error encountered
+func (v *Visitor) Validate() error {
+	// Validate callsign
+	if err := v.ValidateCallsign(); err != nil {
+		return err
+	}
+
+	// Validate email
+	if err := v.ValidateEmail(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type VisitorStore struct {
@@ -53,16 +126,29 @@ func NewVisitorStore(dbFile string) (*VisitorStore, error) {
 }
 
 func (vs *VisitorStore) SaveVisitor(v Visitor) error {
+	// Normalize inputs
+	v.FirstName = strings.TrimSpace(v.FirstName)
+	v.LastName = strings.TrimSpace(v.LastName)
+	v.Callsign = strings.ToUpper(strings.TrimSpace(v.Callsign))
+	v.Email = strings.ToLower(strings.TrimSpace(v.Email))
+
+	// Validate required field
 	if v.FirstName == "" {
 		return fmt.Errorf("first name cannot be empty")
 	}
+
+	// Validate all fields
+	if err := v.Validate(); err != nil {
+		return err
+	}
+
 	if v.CreatedAt.IsZero() {
 		v.CreatedAt = time.Now()
 	}
-	
+
 	query := `INSERT INTO visitors (created_at, first_name, last_name, callsign, email, nfarl, contactme, youth, firsttime)
 			  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	
+
 	_, err := vs.db.Exec(query, v.CreatedAt.Format(time.RFC3339), v.FirstName, v.LastName, v.Callsign, v.Email, v.Nfarl, v.Contactme, v.Youth, v.Firsttime)
 	return err
 }

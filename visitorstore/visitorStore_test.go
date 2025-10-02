@@ -175,7 +175,7 @@ func TestTotalVisitors(t *testing.T) {
 func TestImportFromCSV(t *testing.T) {
 	dbFile := "test_import.db"
 	defer os.Remove(dbFile)
-	
+
 	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
 		t.Fatalf("Failed to create visitor store: %v", err)
@@ -213,7 +213,7 @@ N0CALL,false,2025-06-28T10:35:09.316541124-04:00,,Example,true,2,Person,false,tr
 	if err != nil {
 		t.Errorf("ListVisitors() after import error = %v", err)
 	}
-	
+
 	if len(visitors) != 2 {
 		t.Fatalf("Expected 2 visitors, got %d", len(visitors))
 	}
@@ -222,7 +222,7 @@ N0CALL,false,2025-06-28T10:35:09.316541124-04:00,,Example,true,2,Person,false,tr
 	if visitors[0].FirstName != "Test" || visitors[0].Callsign != "W1AW" {
 		t.Errorf("First visitor = %+v, want Test/W1AW", visitors[0])
 	}
-	
+
 	// Check second visitor
 	if visitors[1].FirstName != "Example" || visitors[1].Youth != true {
 		t.Errorf("Second visitor = %+v, want Example with Youth=true", visitors[1])
@@ -232,5 +232,248 @@ N0CALL,false,2025-06-28T10:35:09.316541124-04:00,,Example,true,2,Person,false,tr
 	err = vs.ImportFromCSV("nonexistent.csv")
 	if err == nil {
 		t.Error("ImportFromCSV() with non-existent file should return error")
+	}
+}
+
+func TestVisitorValidateCallsign(t *testing.T) {
+	tests := []struct {
+		name      string
+		callsign  string
+		wantError bool
+	}{
+		// Valid callsigns
+		{name: "valid US callsign", callsign: "W1AW", wantError: false},
+		{name: "valid US callsign lowercase", callsign: "w1aw", wantError: false},
+		{name: "valid with portable indicator", callsign: "KB6NU/M", wantError: false},
+		{name: "valid UK callsign", callsign: "2E0ABC", wantError: false},
+		{name: "valid Australian callsign", callsign: "VK2ABC", wantError: false},
+		{name: "valid short callsign", callsign: "W1A", wantError: false},
+		{name: "empty callsign (optional)", callsign: "", wantError: false},
+		{name: "whitespace only (optional)", callsign: "   ", wantError: false},
+
+		// Invalid callsigns
+		{name: "no letters", callsign: "123", wantError: true},
+		{name: "no digit", callsign: "INVALID", wantError: true},
+		{name: "suffix too long", callsign: "W1TOOLONG", wantError: true},
+		{name: "special characters", callsign: "W1AW!", wantError: true},
+		{name: "missing suffix", callsign: "W1", wantError: true},
+		{name: "only prefix", callsign: "ABC", wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := Visitor{Callsign: tt.callsign}
+			err := v.ValidateCallsign()
+
+			if tt.wantError && err == nil {
+				t.Errorf("ValidateCallsign() error = nil, want error for callsign %q", tt.callsign)
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("ValidateCallsign() error = %v, want nil for callsign %q", err, tt.callsign)
+			}
+		})
+	}
+}
+
+func TestVisitorValidateEmail(t *testing.T) {
+	tests := []struct {
+		name      string
+		email     string
+		wantError bool
+	}{
+		// Valid emails
+		{name: "valid simple email", email: "user@example.com", wantError: false},
+		{name: "valid with subdomain", email: "user@mail.example.com", wantError: false},
+		{name: "valid with plus sign", email: "user+tag@example.com", wantError: false},
+		{name: "valid with dots", email: "first.last@example.com", wantError: false},
+		{name: "valid UK domain", email: "test@example.co.uk", wantError: false},
+		{name: "valid mixed case", email: "User@Example.COM", wantError: false},
+		{name: "empty email (optional)", email: "", wantError: false},
+		{name: "whitespace only (optional)", email: "   ", wantError: false},
+
+		// Invalid emails
+		{name: "no at sign", email: "notanemail", wantError: true},
+		{name: "missing domain", email: "user@", wantError: true},
+		{name: "missing local part", email: "@example.com", wantError: true},
+		{name: "missing TLD", email: "user@domain", wantError: true},
+		{name: "spaces in email", email: "user @example.com", wantError: true},
+		{name: "multiple at signs", email: "user@@example.com", wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := Visitor{Email: tt.email}
+			err := v.ValidateEmail()
+
+			if tt.wantError && err == nil {
+				t.Errorf("ValidateEmail() error = nil, want error for email %q", tt.email)
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("ValidateEmail() error = %v, want nil for email %q", err, tt.email)
+			}
+		})
+	}
+}
+
+func TestVisitorValidate(t *testing.T) {
+	tests := []struct {
+		name      string
+		visitor   Visitor
+		wantError bool
+		errorField string
+	}{
+		{
+			name: "valid with all fields",
+			visitor: Visitor{
+				FirstName: "John",
+				Callsign:  "W1AW",
+				Email:     "john@example.com",
+			},
+			wantError: false,
+		},
+		{
+			name: "valid with empty optionals",
+			visitor: Visitor{
+				FirstName: "Jane",
+				Callsign:  "",
+				Email:     "",
+			},
+			wantError: false,
+		},
+		{
+			name: "invalid callsign",
+			visitor: Visitor{
+				FirstName: "Bob",
+				Callsign:  "INVALID",
+				Email:     "bob@example.com",
+			},
+			wantError: true,
+			errorField: "Callsign",
+		},
+		{
+			name: "invalid email",
+			visitor: Visitor{
+				FirstName: "Alice",
+				Callsign:  "W1AW",
+				Email:     "notanemail",
+			},
+			wantError: true,
+			errorField: "Email",
+		},
+		{
+			name: "both invalid - should return first error (callsign)",
+			visitor: Visitor{
+				FirstName: "Charlie",
+				Callsign:  "123",
+				Email:     "notanemail",
+			},
+			wantError: true,
+			errorField: "Callsign",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.visitor.Validate()
+
+			if tt.wantError && err == nil {
+				t.Errorf("Validate() error = nil, want error")
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("Validate() error = %v, want nil", err)
+			}
+			if tt.wantError && err != nil {
+				if verr, ok := err.(*ValidationError); ok {
+					if verr.Field != tt.errorField {
+						t.Errorf("Validate() error field = %q, want %q", verr.Field, tt.errorField)
+					}
+				} else {
+					t.Errorf("Validate() error type = %T, want *ValidationError", err)
+				}
+			}
+		})
+	}
+}
+
+func TestNormalization(t *testing.T) {
+	dbFile := "test_normalization.db"
+	defer os.Remove(dbFile)
+
+	vs, err := NewVisitorStore(dbFile)
+	if err != nil {
+		t.Fatalf("Failed to create visitor store: %v", err)
+	}
+	defer vs.db.Close()
+
+	tests := []struct {
+		name              string
+		input             Visitor
+		expectedCallsign  string
+		expectedEmail     string
+		expectedFirstName string
+	}{
+		{
+			name: "uppercase callsign",
+			input: Visitor{
+				FirstName: "Test",
+				Callsign:  "w1aw",
+				Email:     "test@example.com",
+			},
+			expectedCallsign:  "W1AW",
+			expectedEmail:     "test@example.com",
+			expectedFirstName: "Test",
+		},
+		{
+			name: "lowercase email",
+			input: Visitor{
+				FirstName: "Test",
+				Callsign:  "W1AW",
+				Email:     "Test@EXAMPLE.COM",
+			},
+			expectedCallsign:  "W1AW",
+			expectedEmail:     "test@example.com",
+			expectedFirstName: "Test",
+		},
+		{
+			name: "trim whitespace",
+			input: Visitor{
+				FirstName: "  Test  ",
+				LastName:  "  User  ",
+				Callsign:  "  W1AW  ",
+				Email:     "  test@example.com  ",
+			},
+			expectedCallsign:  "W1AW",
+			expectedEmail:     "test@example.com",
+			expectedFirstName: "Test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := vs.SaveVisitor(tt.input)
+			if err != nil {
+				t.Fatalf("SaveVisitor() error = %v, want nil", err)
+			}
+
+			visitors, err := vs.ListVisitors()
+			if err != nil {
+				t.Fatalf("ListVisitors() error = %v", err)
+			}
+
+			if len(visitors) == 0 {
+				t.Fatal("No visitors found after save")
+			}
+
+			last := visitors[len(visitors)-1]
+			if last.Callsign != tt.expectedCallsign {
+				t.Errorf("Callsign = %q, want %q", last.Callsign, tt.expectedCallsign)
+			}
+			if last.Email != tt.expectedEmail {
+				t.Errorf("Email = %q, want %q", last.Email, tt.expectedEmail)
+			}
+			if last.FirstName != tt.expectedFirstName {
+				t.Errorf("FirstName = %q, want %q", last.FirstName, tt.expectedFirstName)
+			}
+		})
 	}
 }
