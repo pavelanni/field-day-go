@@ -2,6 +2,10 @@
     const callsignInput = document.getElementById("callsign");
     if (!callsignInput) return;
 
+    callsignInput.addEventListener("input", function () {
+        callsignInput.value = callsignInput.value.toUpperCase();
+    });
+
     callsignInput.addEventListener("blur", function () {
         const callsign = callsignInput.value.trim();
         if (!callsign) return;
