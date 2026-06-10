@@ -297,11 +297,11 @@ func TestPrivacyHandler(t *testing.T) {
 
 func TestMemberLookupHandler(t *testing.T) {
 	tests := []struct {
-		name         string
-		callsign     string
-		membersFile  string
-		wantBody     string
-		wantJSON     map[string]string
+		name        string
+		callsign    string
+		membersFile string
+		wantBody    string
+		wantJSON    map[string]string
 	}{
 		{
 			name:        "members nil returns empty object",

@@ -84,7 +84,7 @@ func LoadCSV(path string) (*Lookup, error) {
 // Lookup returns the Member for the given callsign, or false if not found.
 // Callsign matching is case-insensitive.
 func (l *Lookup) Lookup(callsign string) (Member, bool) {
-	if callsign == "" {
+	if l == nil || l.members == nil || callsign == "" {
 		return Member{}, false
 	}
 	m, ok := l.members[strings.ToUpper(callsign)]
