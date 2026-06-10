@@ -48,13 +48,20 @@ func LoadCSV(path string) (*Lookup, error) {
 		}
 	}
 
+	maxIdx := 0
+	for _, idx := range colIdx {
+		if idx > maxIdx {
+			maxIdx = idx
+		}
+	}
+
 	members := make(map[string]Member)
 	for {
 		record, err := r.Read()
 		if err != nil {
 			break
 		}
-		if len(record) < len(required) {
+		if len(record) <= maxIdx {
 			continue
 		}
 

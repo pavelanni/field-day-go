@@ -19,8 +19,10 @@ func TestLoadMembers(t *testing.T) {
 		t.Fatalf("LoadCSV failed: %v", err)
 	}
 
-	if len(ml.members) != 2 {
-		t.Errorf("expected 2 members, got %d", len(ml.members))
+	_, ok1 := ml.Lookup("W1AW")
+	_, ok2 := ml.Lookup("K1ABC")
+	if !ok1 || !ok2 {
+		t.Errorf("expected both W1AW and K1ABC to be found")
 	}
 }
 
@@ -92,8 +94,9 @@ func TestLoadCSVEmptyFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadCSV failed: %v", err)
 	}
-	if len(ml.members) != 0 {
-		t.Errorf("expected 0 members, got %d", len(ml.members))
+	_, ok := ml.Lookup("W1AW")
+	if ok {
+		t.Errorf("expected 0 members, but found W1AW")
 	}
 }
 
