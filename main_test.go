@@ -13,7 +13,7 @@ func TestHomeHandler(t *testing.T) {
 	// Create test server
 	dbFile := "test_home.db"
 	defer os.Remove(dbFile)
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestHomeHandler(t *testing.T) {
 func TestConfirmHandler(t *testing.T) {
 	dbFile := "test_confirm.db"
 	defer os.Remove(dbFile)
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestNewVisitorHandler_GET(t *testing.T) {
 	dbFile := "test_handler.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestNewVisitorHandler_POST(t *testing.T) {
 	dbFile := "test_handler_post.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +152,7 @@ func TestNewVisitorHandler_POST_MissingFirstName(t *testing.T) {
 	dbFile := "test_handler_missing.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestListHandler(t *testing.T) {
 	dbFile := "test_list_handler.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestMorseAudioHandler(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	// morse handler doesn't need DB but uses server method now
-	server, err := NewServer("test_morse.db", thisYear)
+	server, err := NewServer("test_morse.db", "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +253,7 @@ func TestMorseAudioHandler_MissingCallsign(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	server, err := NewServer("test_morse2.db", thisYear)
+	server, err := NewServer("test_morse2.db", "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,7 +269,7 @@ func TestMorseAudioHandler_MissingCallsign(t *testing.T) {
 func TestPrivacyHandler(t *testing.T) {
 	dbFile := "test_privacy.db"
 	defer os.Remove(dbFile)
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -298,7 +298,7 @@ func TestNewVisitorHandler_InvalidCallsign(t *testing.T) {
 	dbFile := "test_invalid_callsign.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -346,7 +346,7 @@ func TestNewVisitorHandler_InvalidEmail(t *testing.T) {
 	dbFile := "test_invalid_email.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -394,7 +394,7 @@ func TestNewVisitorHandler_ValidInputs(t *testing.T) {
 	dbFile := "test_valid_inputs.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -447,7 +447,7 @@ func TestNewVisitorHandler_EmptyOptionalFields(t *testing.T) {
 	dbFile := "test_empty_optional.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -483,4 +483,32 @@ func TestNewVisitorHandler_EmptyOptionalFields(t *testing.T) {
 	if total != 1 {
 		t.Errorf("Expected 1 visitor, got %d", total)
 	}
+}
+
+func TestMemberLookupHandler(t *testing.T) {
+	t.Run("members nil returns empty object", func(t *testing.T) {
+		dbFile := "test_lookup_nil.db"
+		defer os.Remove(dbFile)
+
+		server, err := NewServer(dbFile, "", thisYear)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer server.store.Close()
+
+		req, _ := http.NewRequest("GET", "/member-lookup?callsign=W1AW", nil)
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(server.memberLookupHandler)
+		handler.ServeHTTP(rr, req)
+
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("expected 200, got %d", status)
+		}
+		if rr.Body.String() != "{}" {
+			t.Errorf("expected {}, got %q", rr.Body.String())
+		}
+		if ct := rr.Header().Get("Content-Type"); ct != "application/json" {
+			t.Errorf("expected application/json, got %q", ct)
+		}
+	})
 }

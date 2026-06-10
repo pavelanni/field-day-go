@@ -90,3 +90,8 @@ func (l *Lookup) Lookup(callsign string) (Member, bool) {
 	m, ok := l.members[strings.ToUpper(callsign)]
 	return m, ok
 }
+
+// Len returns the number of members loaded.
+func (l *Lookup) Len() int {
+	return len(l.members)
+}

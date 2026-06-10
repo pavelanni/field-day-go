@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"log"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/schema"
+	"github.com/pavelanni/field-day-go/memberlookup"
 	"github.com/pavelanni/field-day-go/morse"
 	"github.com/pavelanni/field-day-go/visitorstore"
 	"github.com/spf13/pflag"
@@ -29,16 +32,29 @@ var staticFS embed.FS
 
 type Server struct {
 	store     *visitorstore.VisitorStore
+	members   *memberlookup.Lookup
 	templates map[string]*template.Template
 	year      string
 }
 
-func NewServer(dbFile string, year string) (*Server, error) {
+func NewServer(dbFile, membersFile, year string) (*Server, error) {
 	store, err := visitorstore.NewVisitorStore(dbFile)
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{store: store, year: year}
+
+	var members *memberlookup.Lookup
+	if membersFile != "" {
+		members, err = memberlookup.LoadCSV(membersFile)
+		if err != nil {
+			return nil, fmt.Errorf("loading members CSV: %w", err)
+		}
+		log.Printf("Loaded %d club members from %s", members.Len(), membersFile)
+	} else {
+		log.Println("No members CSV specified; member auto-fill disabled")
+	}
+
+	s := &Server{store: store, members: members, year: year}
 	if err := s.initTemplates(); err != nil {
 		return nil, err
 	}
@@ -128,6 +144,7 @@ func (s *Server) run(addr, port string) error {
 	mux.HandleFunc("/morse-audio", s.morseAudioHandler)
 	mux.HandleFunc("/privacy", s.privacyHandler)
 	mux.HandleFunc("/healthz", s.healthHandler)
+	mux.HandleFunc("/member-lookup", s.memberLookupHandler)
 
 	srv := &http.Server{
 		Addr:              addr + ":" + port,
@@ -288,12 +305,47 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("ok"))
 }
 
+func (s *Server) memberLookupHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if s.members == nil {
+		_, _ = w.Write([]byte(`{}`))
+		return
+	}
+
+	callsign := r.URL.Query().Get("callsign")
+	if callsign == "" {
+		_, _ = w.Write([]byte(`{}`))
+		return
+	}
+
+	member, ok := s.members.Lookup(callsign)
+	if !ok {
+		_, _ = w.Write([]byte(`{}`))
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]string{
+		"first_name": member.FirstName,
+		"last_name":  member.LastName,
+		"email":      member.Email,
+	}); err != nil {
+		log.Printf("memberLookupHandler encode error: %v", err)
+	}
+}
+
 func main() {
 	var (
-		flagDB   string
-		flagPort string
-		flagAddr string
-		flagYear string
+		flagDB      string
+		flagPort    string
+		flagAddr    string
+		flagYear    string
+		flagMembers string
 	)
 
 	// Defaults can be overridden by environment variables
@@ -314,18 +366,20 @@ func main() {
 	if flagYear == "" {
 		flagYear = thisYear
 	}
+	flagMembers = os.Getenv("FD_MEMBERS")
 
 	pflag.StringVar(&flagDB, "db", flagDB, "Path to SQLite DB file (required)")
 	pflag.StringVar(&flagPort, "port", flagPort, "Port to listen on")
 	pflag.StringVar(&flagAddr, "addr", flagAddr, "Bind address")
 	pflag.StringVar(&flagYear, "year", flagYear, "Event year for templates")
+	pflag.StringVar(&flagMembers, "members", flagMembers, "Path to club members CSV file")
 	pflag.Parse()
 
 	if flagDB == "" {
 		log.Fatal("database file not provided: use --db or FD_DB or positional arg")
 	}
 
-	server, err := NewServer(flagDB, flagYear)
+	server, err := NewServer(flagDB, flagMembers, flagYear)
 	if err != nil {
 		log.Fatal(err)
 	}
