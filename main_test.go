@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,7 +14,7 @@ func TestHomeHandler(t *testing.T) {
 	// Create test server
 	dbFile := "test_home.db"
 	defer os.Remove(dbFile)
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +42,7 @@ func TestHomeHandler(t *testing.T) {
 func TestConfirmHandler(t *testing.T) {
 	dbFile := "test_confirm.db"
 	defer os.Remove(dbFile)
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +75,7 @@ func TestNewVisitorHandler_GET(t *testing.T) {
 	dbFile := "test_handler.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +105,7 @@ func TestNewVisitorHandler_POST(t *testing.T) {
 	dbFile := "test_handler_post.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +153,7 @@ func TestNewVisitorHandler_POST_MissingFirstName(t *testing.T) {
 	dbFile := "test_handler_missing.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +190,7 @@ func TestListHandler(t *testing.T) {
 	dbFile := "test_list_handler.db"
 	defer os.Remove(dbFile)
 
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +223,7 @@ func TestMorseAudioHandler(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	// morse handler doesn't need DB but uses server method now
-	server, err := NewServer("test_morse.db", thisYear)
+	server, err := NewServer("test_morse.db", "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +254,7 @@ func TestMorseAudioHandler_MissingCallsign(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	server, err := NewServer("test_morse2.db", thisYear)
+	server, err := NewServer("test_morse2.db", "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,7 +270,7 @@ func TestMorseAudioHandler_MissingCallsign(t *testing.T) {
 func TestPrivacyHandler(t *testing.T) {
 	dbFile := "test_privacy.db"
 	defer os.Remove(dbFile)
-	server, err := NewServer(dbFile, thisYear)
+	server, err := NewServer(dbFile, "", thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -294,193 +295,97 @@ func TestPrivacyHandler(t *testing.T) {
 	}
 }
 
-func TestNewVisitorHandler_InvalidCallsign(t *testing.T) {
-	dbFile := "test_invalid_callsign.db"
-	defer os.Remove(dbFile)
-
-	server, err := NewServer(dbFile, thisYear)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer server.store.Close()
-
-	// Test with invalid callsign
-	form := url.Values{}
-	form.Add("firstname", "Test")
-	form.Add("lastname", "User")
-	form.Add("callsign", "123") // Invalid: no letters
-	form.Add("email", "test@example.com")
-
-	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.newVisitorHandler)
-	handler.ServeHTTP(rr, req)
-
-	// Should return HTTP 400 Bad Request
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("newVisitorHandler with invalid callsign returned status %v, want %v", status, http.StatusBadRequest)
-	}
-
-	// Should display error message
-	body := rr.Body.String()
-	if !strings.Contains(body, "Callsign") {
-		t.Errorf("Response should contain 'Callsign' error, got: %s", body)
-	}
-
-	// Verify visitor was NOT saved
-	total, err := server.store.TotalVisitors()
-	if err != nil {
-		t.Errorf("Failed to get total visitors: %v", err)
-	}
-	if total != 0 {
-		t.Errorf("Expected 0 visitors after invalid submission, got %d", total)
-	}
-}
-
-func TestNewVisitorHandler_InvalidEmail(t *testing.T) {
-	dbFile := "test_invalid_email.db"
-	defer os.Remove(dbFile)
-
-	server, err := NewServer(dbFile, thisYear)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer server.store.Close()
-
-	// Test with invalid email
-	form := url.Values{}
-	form.Add("firstname", "Test")
-	form.Add("lastname", "User")
-	form.Add("callsign", "W1AW")
-	form.Add("email", "notanemail") // Invalid: missing @ and domain
-
-	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.newVisitorHandler)
-	handler.ServeHTTP(rr, req)
-
-	// Should return HTTP 400 Bad Request
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("newVisitorHandler with invalid email returned status %v, want %v", status, http.StatusBadRequest)
+func TestMemberLookupHandler(t *testing.T) {
+	tests := []struct {
+		name        string
+		callsign    string
+		membersFile string
+		wantBody    string
+		wantJSON    map[string]string
+	}{
+		{
+			name:        "members nil returns empty object",
+			callsign:    "W1AW",
+			membersFile: "",
+			wantBody:    "{}",
+		},
+		{
+			name:        "empty callsign returns empty object",
+			callsign:    "",
+			membersFile: "memberlookup/testdata/members.csv",
+			wantBody:    "{}",
+		},
+		{
+			name:        "unknown callsign returns empty object",
+			callsign:    "ZZZZZZ",
+			membersFile: "memberlookup/testdata/members.csv",
+			wantBody:    "{}",
+		},
+		{
+			name:        "known callsign returns member data",
+			callsign:    "W1AW",
+			membersFile: "memberlookup/testdata/members.csv",
+			wantJSON: map[string]string{
+				"first_name": "John",
+				"last_name":  "Doe",
+				"email":      "john@example.com",
+			},
+		},
 	}
 
-	// Should display error message
-	body := rr.Body.String()
-	if !strings.Contains(body, "Email") {
-		t.Errorf("Response should contain 'Email' error, got: %s", body)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbFile := "test_member_lookup.db"
+			defer os.Remove(dbFile)
 
-	// Verify visitor was NOT saved
-	total, err := server.store.TotalVisitors()
-	if err != nil {
-		t.Errorf("Failed to get total visitors: %v", err)
-	}
-	if total != 0 {
-		t.Errorf("Expected 0 visitors after invalid submission, got %d", total)
-	}
-}
+			server, err := NewServer(dbFile, tt.membersFile, thisYear)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer server.store.Close()
 
-func TestNewVisitorHandler_ValidInputs(t *testing.T) {
-	dbFile := "test_valid_inputs.db"
-	defer os.Remove(dbFile)
+			reqURL := "/member-lookup"
+			if tt.callsign != "" {
+				reqURL += "?callsign=" + tt.callsign
+			}
+			req, err := http.NewRequest("GET", reqURL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	server, err := NewServer(dbFile, thisYear)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer server.store.Close()
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.memberLookupHandler)
+			handler.ServeHTTP(rr, req)
 
-	// Test with valid inputs that need normalization
-	form := url.Values{}
-	form.Add("firstname", "  Test  ") // Whitespace to trim
-	form.Add("lastname", "User")
-	form.Add("callsign", "w1aw")          // Lowercase to uppercase
-	form.Add("email", "Test@EXAMPLE.COM") // Mixed case to lowercase
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("memberLookupHandler returned wrong status code: got %v want %v", status, http.StatusOK)
+			}
 
-	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			contentType := rr.Header().Get("Content-Type")
+			if contentType != "application/json" {
+				t.Errorf("memberLookupHandler should return application/json, got: %s", contentType)
+			}
 
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.newVisitorHandler)
-	handler.ServeHTTP(rr, req)
+			body := strings.TrimSpace(rr.Body.String())
 
-	// Should redirect successfully
-	if status := rr.Code; status != http.StatusSeeOther {
-		t.Errorf("newVisitorHandler with valid inputs returned status %v, want %v", status, http.StatusSeeOther)
-	}
+			if tt.wantBody != "" {
+				if body != tt.wantBody {
+					t.Errorf("expected body %q, got %q", tt.wantBody, body)
+				}
+				return
+			}
 
-	// Verify visitor was saved with normalized values
-	visitors, err := server.store.ListVisitors()
-	if err != nil {
-		t.Fatalf("Failed to list visitors: %v", err)
-	}
-	if len(visitors) != 1 {
-		t.Fatalf("Expected 1 visitor, got %d", len(visitors))
-	}
-
-	v := visitors[0]
-	if v.FirstName != "Test" {
-		t.Errorf("FirstName = %q, want %q (trimmed)", v.FirstName, "Test")
-	}
-	if v.Callsign != "W1AW" {
-		t.Errorf("Callsign = %q, want %q (uppercase)", v.Callsign, "W1AW")
-	}
-	if v.Email != "test@example.com" {
-		t.Errorf("Email = %q, want %q (lowercase)", v.Email, "test@example.com")
-	}
-}
-
-func TestNewVisitorHandler_EmptyOptionalFields(t *testing.T) {
-	dbFile := "test_empty_optional.db"
-	defer os.Remove(dbFile)
-
-	server, err := NewServer(dbFile, thisYear)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer server.store.Close()
-
-	// Test with empty optional fields
-	form := url.Values{}
-	form.Add("firstname", "Test")
-	form.Add("lastname", "User")
-	form.Add("callsign", "") // Empty optional field
-	form.Add("email", "")    // Empty optional field
-
-	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.newVisitorHandler)
-	handler.ServeHTTP(rr, req)
-
-	// Should redirect successfully (empty optional fields are valid)
-	if status := rr.Code; status != http.StatusSeeOther {
-		t.Errorf("newVisitorHandler with empty optionals returned status %v, want %v", status, http.StatusSeeOther)
-	}
-
-	// Verify visitor was saved
-	total, err := server.store.TotalVisitors()
-	if err != nil {
-		t.Errorf("Failed to get total visitors: %v", err)
-	}
-	if total != 1 {
-		t.Errorf("Expected 1 visitor, got %d", total)
+			if tt.wantJSON != nil {
+				var got map[string]string
+				if err := json.Unmarshal([]byte(body), &got); err != nil {
+					t.Fatalf("failed to parse JSON response: %v", err)
+				}
+				for k, v := range tt.wantJSON {
+					if got[k] != v {
+						t.Errorf("expected %s=%q, got %q", k, v, got[k])
+					}
+				}
+			}
+		})
 	}
 }
