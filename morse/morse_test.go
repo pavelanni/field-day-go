@@ -8,7 +8,7 @@ func TestNewPlayer(t *testing.T) {
 	freq := 600
 	wpm := 15
 	player := NewPlayer(freq, wpm)
-	
+
 	if player == nil {
 		t.Error("NewPlayer() returned nil")
 	}
@@ -25,15 +25,15 @@ func TestCalculateMorseTiming(t *testing.T) {
 		wpm         int
 		expectedDot int
 	}{
-		{20, 60},   // 60000 / (20 * 50) = 60ms
-		{15, 80},   // 60000 / (15 * 50) = 80ms
-		{10, 120},  // 60000 / (10 * 50) = 120ms
-		{0, 60},    // Default to 20 WPM
+		{20, 60},  // 60000 / (20 * 50) = 60ms
+		{15, 80},  // 60000 / (15 * 50) = 80ms
+		{10, 120}, // 60000 / (10 * 50) = 120ms
+		{0, 60},   // Default to 20 WPM
 	}
-	
+
 	for _, tc := range testCases {
 		dot, dash, elementGap, charGap, wordGap := calculateMorseTiming(tc.wpm)
-		
+
 		if dot != tc.expectedDot {
 			t.Errorf("calculateMorseTiming(%d) dot = %d, want %d", tc.wpm, dot, tc.expectedDot)
 		}
@@ -63,7 +63,7 @@ func TestMorseCodeMap(t *testing.T) {
 		'0': "-----",
 		'?': "..--..",
 	}
-	
+
 	for char, expectedMorse := range testCases {
 		if morse, exists := morseCodeMap[char]; !exists {
 			t.Errorf("morseCodeMap missing entry for '%c'", char)
@@ -81,30 +81,30 @@ func TestGenerateWav(t *testing.T) {
 		"A",
 		"",
 	}
-	
+
 	for _, text := range testCases {
 		wavData, err := GenerateWav(text)
 		if err != nil {
 			t.Errorf("GenerateWav(%q) error = %v, want nil", text, err)
 			continue
 		}
-		
+
 		if len(wavData) == 0 {
 			t.Errorf("GenerateWav(%q) returned empty data", text)
 			continue
 		}
-		
+
 		// Check WAV header
 		if len(wavData) < 44 {
 			t.Errorf("GenerateWav(%q) returned data too short for WAV header", text)
 			continue
 		}
-		
+
 		// Check RIFF header
 		if string(wavData[0:4]) != "RIFF" {
 			t.Errorf("GenerateWav(%q) missing RIFF header", text)
 		}
-		
+
 		// Check WAVE format
 		if string(wavData[8:12]) != "WAVE" {
 			t.Errorf("GenerateWav(%q) missing WAVE format", text)
@@ -114,25 +114,25 @@ func TestGenerateWav(t *testing.T) {
 
 func TestPlayerGenerateMorseAudio(t *testing.T) {
 	player := NewPlayer(600, 20)
-	
+
 	testCases := []struct {
-		text     string
-		minSize  int
-		maxSize  int
+		text    string
+		minSize int
+		maxSize int
 	}{
 		{"A", 1000, 20000},     // Single letter
 		{"SOS", 10000, 100000}, // Classic distress call
 		{"", 0, 100},           // Empty string
 		{" ", 10000, 30000},    // Single space (word gap)
 	}
-	
+
 	for _, tc := range testCases {
 		samples, totalSamples := player.generateMorseAudio(tc.text)
-		
+
 		if len(samples) != totalSamples {
 			t.Errorf("generateMorseAudio(%q) len(samples) = %d, want %d", tc.text, len(samples), totalSamples)
 		}
-		
+
 		if totalSamples < tc.minSize || totalSamples > tc.maxSize {
 			t.Errorf("generateMorseAudio(%q) totalSamples = %d, want between %d and %d", tc.text, totalSamples, tc.minSize, tc.maxSize)
 		}
@@ -141,7 +141,7 @@ func TestPlayerGenerateMorseAudio(t *testing.T) {
 
 func TestPlayerPlay(t *testing.T) {
 	player := NewPlayer(600, 15)
-	
+
 	// Test various inputs
 	testCases := []string{
 		"W1AW",
@@ -150,7 +150,7 @@ func TestPlayerPlay(t *testing.T) {
 		"HELLO WORLD",
 		"",
 	}
-	
+
 	for _, text := range testCases {
 		err := player.Play(text)
 		if err != nil {
@@ -166,7 +166,7 @@ func TestMorseCodeMapCompleteness(t *testing.T) {
 			t.Errorf("morseCodeMap missing letter '%c'", char)
 		}
 	}
-	
+
 	for char := '0'; char <= '9'; char++ {
 		if _, exists := morseCodeMap[char]; !exists {
 			t.Errorf("morseCodeMap missing digit '%c'", char)
@@ -176,19 +176,19 @@ func TestMorseCodeMapCompleteness(t *testing.T) {
 
 func TestCaseInsensitivity(t *testing.T) {
 	player := NewPlayer(600, 20)
-	
+
 	// Test that uppercase and lowercase generate the same audio
 	upperSamples, upperTotal := player.generateMorseAudio("SOS")
 	lowerSamples, lowerTotal := player.generateMorseAudio("sos")
-	
+
 	if upperTotal != lowerTotal {
 		t.Errorf("Case sensitivity issue: uppercase total = %d, lowercase total = %d", upperTotal, lowerTotal)
 	}
-	
+
 	if len(upperSamples) != len(lowerSamples) {
 		t.Errorf("Case sensitivity issue: different sample lengths")
 	}
-	
+
 	// Check that samples are identical
 	for i := 0; i < len(upperSamples) && i < len(lowerSamples); i++ {
 		if upperSamples[i] != lowerSamples[i] {

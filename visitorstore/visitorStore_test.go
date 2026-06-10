@@ -2,6 +2,7 @@ package visitorstore
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -10,7 +11,7 @@ func TestNewVisitorStore(t *testing.T) {
 	// Test case: successful database initialization
 	dbFile := "test_new.db"
 	defer os.Remove(dbFile) // Clean up
-	
+
 	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
 		t.Errorf("NewVisitorStore() error = %v, want nil", err)
@@ -40,7 +41,7 @@ func TestNewVisitorStore(t *testing.T) {
 func TestSaveVisitor(t *testing.T) {
 	dbFile := "test_save.db"
 	defer os.Remove(dbFile)
-	
+
 	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
 		t.Fatalf("Failed to create visitor store: %v", err)
@@ -60,14 +61,15 @@ func TestSaveVisitor(t *testing.T) {
 		t.Errorf("Failed to save visitor: %v", err)
 	}
 
-	// Test case: Save visitor with missing required field
+	// Test case: Save visitor with missing required field (validation is now in Validate())
 	v = Visitor{
-		LastName: "Doe",
-		Email:    "test@example.com",
+		FirstName: "",
+		LastName:  "Doe",
+		Email:     "test@example.com",
 	}
-	err = vs.SaveVisitor(v)
+	err = v.Validate()
 	if err == nil {
-		t.Error("Expected error when saving visitor with missing FirstName")
+		t.Error("Expected validation error when FirstName is missing")
 	}
 
 	// Test case: Save visitor with CreatedAt auto-populated
@@ -84,7 +86,7 @@ func TestSaveVisitor(t *testing.T) {
 func TestListVisitors(t *testing.T) {
 	dbFile := "test_list.db"
 	defer os.Remove(dbFile)
-	
+
 	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
 		t.Fatalf("Failed to create visitor store: %v", err)
@@ -103,7 +105,7 @@ func TestListVisitors(t *testing.T) {
 	// Test case: non-empty visitor list
 	visitor1 := Visitor{FirstName: "Alice", LastName: "Smith", CreatedAt: time.Now()}
 	visitor2 := Visitor{FirstName: "Bob", LastName: "Johnson", CreatedAt: time.Now()}
-	
+
 	err = vs.SaveVisitor(visitor1)
 	if err != nil {
 		t.Fatal(err)
@@ -112,7 +114,7 @@ func TestListVisitors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	visitors, err = vs.ListVisitors()
 	if err != nil {
 		t.Errorf("ListVisitors() error = %v, want nil", err)
@@ -120,7 +122,7 @@ func TestListVisitors(t *testing.T) {
 	if len(visitors) != 2 {
 		t.Errorf("ListVisitors() = %d visitors, want 2", len(visitors))
 	}
-	
+
 	// Verify visitors are ordered by ID
 	if visitors[0].ID != 1 || visitors[0].FirstName != "Alice" {
 		t.Errorf("ListVisitors()[0] = %+v, want Alice with ID 1", visitors[0])
@@ -133,7 +135,7 @@ func TestListVisitors(t *testing.T) {
 func TestTotalVisitors(t *testing.T) {
 	dbFile := "test_total.db"
 	defer os.Remove(dbFile)
-	
+
 	vs, err := NewVisitorStore(dbFile)
 	if err != nil {
 		t.Fatalf("Failed to create visitor store: %v", err)
@@ -155,14 +157,14 @@ func TestTotalVisitors(t *testing.T) {
 		{FirstName: "Bob", LastName: "Johnson", CreatedAt: time.Now()},
 		{FirstName: "Charlie", LastName: "Brown", CreatedAt: time.Now()},
 	}
-	
+
 	for _, v := range visitors {
 		err = vs.SaveVisitor(v)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
-	
+
 	total, err = vs.TotalVisitors()
 	if err != nil {
 		t.Errorf("TotalVisitors() error = %v, want nil", err)
@@ -317,9 +319,9 @@ func TestVisitorValidateEmail(t *testing.T) {
 
 func TestVisitorValidate(t *testing.T) {
 	tests := []struct {
-		name      string
-		visitor   Visitor
-		wantError bool
+		name       string
+		visitor    Visitor
+		wantError  bool
 		errorField string
 	}{
 		{
@@ -347,7 +349,7 @@ func TestVisitorValidate(t *testing.T) {
 				Callsign:  "INVALID",
 				Email:     "bob@example.com",
 			},
-			wantError: true,
+			wantError:  true,
 			errorField: "Callsign",
 		},
 		{
@@ -357,7 +359,7 @@ func TestVisitorValidate(t *testing.T) {
 				Callsign:  "W1AW",
 				Email:     "notanemail",
 			},
-			wantError: true,
+			wantError:  true,
 			errorField: "Email",
 		},
 		{
@@ -367,7 +369,7 @@ func TestVisitorValidate(t *testing.T) {
 				Callsign:  "123",
 				Email:     "notanemail",
 			},
-			wantError: true,
+			wantError:  true,
 			errorField: "Callsign",
 		},
 	}
@@ -450,6 +452,15 @@ func TestNormalization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Normalize FirstName/LastName (done in handler in production)
+			tt.input.FirstName = strings.TrimSpace(tt.input.FirstName)
+			tt.input.LastName = strings.TrimSpace(tt.input.LastName)
+
+			// Validate normalizes callsign and email
+			if err := tt.input.Validate(); err != nil {
+				t.Fatalf("Validate() error = %v, want nil", err)
+			}
+
 			err := vs.SaveVisitor(tt.input)
 			if err != nil {
 				t.Fatalf("SaveVisitor() error = %v, want nil", err)

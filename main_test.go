@@ -1,80 +1,80 @@
 package main
 
 import (
-    "net/http"
-    "net/http/httptest"
-    "net/url"
-    "os"
-    "strings"
-    "testing"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
+	"strings"
+	"testing"
 )
 
 func TestHomeHandler(t *testing.T) {
-    // Create test server
-    dbFile := "test_home.db"
-    defer os.Remove(dbFile)
-    server, err := NewServer(dbFile, thisYear)
-    if err != nil {
-        t.Fatal(err)
-    }
-    defer server.store.Close()
+	// Create test server
+	dbFile := "test_home.db"
+	defer os.Remove(dbFile)
+	server, err := NewServer(dbFile, thisYear)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.store.Close()
 
-    req, err := http.NewRequest("GET", "/", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    rr := httptest.NewRecorder()
-    handler := http.HandlerFunc(server.homeHandler)
-    handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.homeHandler)
+	handler.ServeHTTP(rr, req)
 
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("homeHandler returned wrong status code: got %v want %v", status, http.StatusOK)
-    }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("homeHandler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
 
-    body := rr.Body.String()
-    if !strings.Contains(body, "Field Day 2026") {
-        t.Errorf("homeHandler should contain 'Field Day 2026', got: %s", body)
-    }
+	body := rr.Body.String()
+	if !strings.Contains(body, "Field Day 2026") {
+		t.Errorf("homeHandler should contain 'Field Day 2026', got: %s", body)
+	}
 }
 
 func TestConfirmHandler(t *testing.T) {
-    dbFile := "test_confirm.db"
-    defer os.Remove(dbFile)
-    server, err := NewServer(dbFile, thisYear)
-    if err != nil {
-        t.Fatal(err)
-    }
-    defer server.store.Close()
+	dbFile := "test_confirm.db"
+	defer os.Remove(dbFile)
+	server, err := NewServer(dbFile, thisYear)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.store.Close()
 
-    req, err := http.NewRequest("GET", "/confirmation?callsign=W1AW&name=Test", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
+	req, err := http.NewRequest("GET", "/confirmation?callsign=W1AW&name=Test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    rr := httptest.NewRecorder()
-    handler := http.HandlerFunc(server.confirmHandler)
-    handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.confirmHandler)
+	handler.ServeHTTP(rr, req)
 
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("confirmHandler returned wrong status code: got %v want %v", status, http.StatusOK)
-    }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("confirmHandler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
 
-    body := rr.Body.String()
-    if !strings.Contains(body, "W1AW") {
-        t.Errorf("confirmHandler should contain callsign 'W1AW', got: %s", body)
-    }
-    if !strings.Contains(body, "Test") {
-        t.Errorf("confirmHandler should contain name 'Test', got: %s", body)
-    }
+	body := rr.Body.String()
+	if !strings.Contains(body, "W1AW") {
+		t.Errorf("confirmHandler should contain callsign 'W1AW', got: %s", body)
+	}
+	if !strings.Contains(body, "Test") {
+		t.Errorf("confirmHandler should contain name 'Test', got: %s", body)
+	}
 }
 
 func TestNewVisitorHandler_GET(t *testing.T) {
 	// Create test database
 	dbFile := "test_handler.db"
 	defer os.Remove(dbFile)
-	
-    server, err := NewServer(dbFile, thisYear)
+
+	server, err := NewServer(dbFile, thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,8 +103,8 @@ func TestNewVisitorHandler_POST(t *testing.T) {
 	// Create test database
 	dbFile := "test_handler_post.db"
 	defer os.Remove(dbFile)
-	
-    server, err := NewServer(dbFile, thisYear)
+
+	server, err := NewServer(dbFile, thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,8 +151,8 @@ func TestNewVisitorHandler_POST_MissingFirstName(t *testing.T) {
 	// Create test database
 	dbFile := "test_handler_missing.db"
 	defer os.Remove(dbFile)
-	
-    server, err := NewServer(dbFile, thisYear)
+
+	server, err := NewServer(dbFile, thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,8 +173,14 @@ func TestNewVisitorHandler_POST_MissingFirstName(t *testing.T) {
 	handler := http.HandlerFunc(server.newVisitorHandler)
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("newVisitorHandler POST with missing firstname should return 500, got %v", status)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("newVisitorHandler POST with missing firstname should return 400, got %v", status)
+	}
+
+	// Should display error message
+	body := rr.Body.String()
+	if !strings.Contains(body, "First name") {
+		t.Errorf("Response should contain 'First name' error, got: %s", body)
 	}
 }
 
@@ -182,8 +188,8 @@ func TestListHandler(t *testing.T) {
 	// Create test database
 	dbFile := "test_list_handler.db"
 	defer os.Remove(dbFile)
-	
-    server, err := NewServer(dbFile, thisYear)
+
+	server, err := NewServer(dbFile, thisYear)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,11 +221,13 @@ func TestMorseAudioHandler(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-    // morse handler doesn't need DB but uses server method now
-    server, err := NewServer("test_morse.db", thisYear)
-    if err != nil { t.Fatal(err) }
-    defer server.store.Close()
-    handler := http.HandlerFunc(server.morseAudioHandler)
+	// morse handler doesn't need DB but uses server method now
+	server, err := NewServer("test_morse.db", thisYear)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.store.Close()
+	handler := http.HandlerFunc(server.morseAudioHandler)
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
@@ -245,10 +253,12 @@ func TestMorseAudioHandler_MissingCallsign(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-    server, err := NewServer("test_morse2.db", thisYear)
-    if err != nil { t.Fatal(err) }
-    defer server.store.Close()
-    handler := http.HandlerFunc(server.morseAudioHandler)
+	server, err := NewServer("test_morse2.db", thisYear)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.store.Close()
+	handler := http.HandlerFunc(server.morseAudioHandler)
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
@@ -257,31 +267,31 @@ func TestMorseAudioHandler_MissingCallsign(t *testing.T) {
 }
 
 func TestPrivacyHandler(t *testing.T) {
-    dbFile := "test_privacy.db"
-    defer os.Remove(dbFile)
-    server, err := NewServer(dbFile, thisYear)
-    if err != nil {
-        t.Fatal(err)
-    }
-    defer server.store.Close()
+	dbFile := "test_privacy.db"
+	defer os.Remove(dbFile)
+	server, err := NewServer(dbFile, thisYear)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.store.Close()
 
-    req, err := http.NewRequest("GET", "/privacy", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
+	req, err := http.NewRequest("GET", "/privacy", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    rr := httptest.NewRecorder()
-    handler := http.HandlerFunc(server.privacyHandler)
-    handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.privacyHandler)
+	handler.ServeHTTP(rr, req)
 
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("privacyHandler returned wrong status code: got %v want %v", status, http.StatusOK)
-    }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("privacyHandler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
 
-    body := rr.Body.String()
-    if !strings.Contains(body, "Field Day 2026") {
-        t.Errorf("privacyHandler should contain 'Field Day 2026', got: %s", body)
-    }
+	body := rr.Body.String()
+	if !strings.Contains(body, "Field Day 2026") {
+		t.Errorf("privacyHandler should contain 'Field Day 2026', got: %s", body)
+	}
 }
 
 func TestNewVisitorHandler_InvalidCallsign(t *testing.T) {
@@ -298,7 +308,7 @@ func TestNewVisitorHandler_InvalidCallsign(t *testing.T) {
 	form := url.Values{}
 	form.Add("firstname", "Test")
 	form.Add("lastname", "User")
-	form.Add("callsign", "123")  // Invalid: no letters
+	form.Add("callsign", "123") // Invalid: no letters
 	form.Add("email", "test@example.com")
 
 	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
@@ -347,7 +357,7 @@ func TestNewVisitorHandler_InvalidEmail(t *testing.T) {
 	form.Add("firstname", "Test")
 	form.Add("lastname", "User")
 	form.Add("callsign", "W1AW")
-	form.Add("email", "notanemail")  // Invalid: missing @ and domain
+	form.Add("email", "notanemail") // Invalid: missing @ and domain
 
 	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
 	if err != nil {
@@ -392,10 +402,10 @@ func TestNewVisitorHandler_ValidInputs(t *testing.T) {
 
 	// Test with valid inputs that need normalization
 	form := url.Values{}
-	form.Add("firstname", "  Test  ")  // Whitespace to trim
+	form.Add("firstname", "  Test  ") // Whitespace to trim
 	form.Add("lastname", "User")
-	form.Add("callsign", "w1aw")  // Lowercase to uppercase
-	form.Add("email", "Test@EXAMPLE.COM")  // Mixed case to lowercase
+	form.Add("callsign", "w1aw")          // Lowercase to uppercase
+	form.Add("email", "Test@EXAMPLE.COM") // Mixed case to lowercase
 
 	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
 	if err != nil {
@@ -447,8 +457,8 @@ func TestNewVisitorHandler_EmptyOptionalFields(t *testing.T) {
 	form := url.Values{}
 	form.Add("firstname", "Test")
 	form.Add("lastname", "User")
-	form.Add("callsign", "")  // Empty optional field
-	form.Add("email", "")      // Empty optional field
+	form.Add("callsign", "") // Empty optional field
+	form.Add("email", "")    // Empty optional field
 
 	req, err := http.NewRequest("POST", "/new", strings.NewReader(form.Encode()))
 	if err != nil {

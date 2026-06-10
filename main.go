@@ -1,19 +1,20 @@
 package main
 
 import (
-    "embed"
-    "html/template"
-    "io/fs"
-    "log"
-    "net/http"
-    "net/url"
-    "os"
-    "time"
+	"embed"
+	"html/template"
+	"io/fs"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
 
-    "github.com/gorilla/schema"
-    "github.com/pavelanni/field-day-go/morse"
-    "github.com/pavelanni/field-day-go/visitorstore"
-    "github.com/spf13/pflag"
+	"github.com/gorilla/schema"
+	"github.com/pavelanni/field-day-go/morse"
+	"github.com/pavelanni/field-day-go/visitorstore"
+	"github.com/spf13/pflag"
 )
 
 var templateDir = "templates"
@@ -27,169 +28,179 @@ var templatesFS embed.FS
 var staticFS embed.FS
 
 type Server struct {
-    store     *visitorstore.VisitorStore
-    templates map[string]*template.Template
-    year      string
+	store     *visitorstore.VisitorStore
+	templates map[string]*template.Template
+	year      string
 }
 
 func NewServer(dbFile string, year string) (*Server, error) {
-    store, err := visitorstore.NewVisitorStore(dbFile)
-    if err != nil {
-        return nil, err
-    }
-    s := &Server{store: store, year: year}
-    if err := s.initTemplates(); err != nil {
-        return nil, err
-    }
-    return s, nil
+	store, err := visitorstore.NewVisitorStore(dbFile)
+	if err != nil {
+		return nil, err
+	}
+	s := &Server{store: store, year: year}
+	if err := s.initTemplates(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 func (s *Server) initTemplates() error {
-    s.templates = map[string]*template.Template{}
+	s.templates = map[string]*template.Template{}
 
-    // Pre-parse template bundles used by handlers
-    // home
-    if tmpl, err := template.ParseFS(templatesFS,
-        templateDir+"/tailwind-refresh.go.html",
-        templateDir+"/header.go.html",
-        templateDir+"/home.go.html",
-        templateDir+"/footer.go.html",
-    ); err != nil {
-        return err
-    } else { s.templates["home"] = tmpl }
+	// Pre-parse template bundles used by handlers
+	// home
+	if tmpl, err := template.ParseFS(templatesFS,
+		templateDir+"/tailwind-refresh.go.html",
+		templateDir+"/header.go.html",
+		templateDir+"/home.go.html",
+		templateDir+"/footer.go.html",
+	); err != nil {
+		return err
+	} else {
+		s.templates["home"] = tmpl
+	}
 
-    // confirmation
-    if tmpl, err := template.ParseFS(templatesFS,
-        templateDir+"/tailwind-refresh.go.html",
-        templateDir+"/header.go.html",
-        templateDir+"/confirmation.go.html",
-        templateDir+"/footer.go.html",
-    ); err != nil {
-        return err
-    } else { s.templates["confirm"] = tmpl }
+	// confirmation
+	if tmpl, err := template.ParseFS(templatesFS,
+		templateDir+"/tailwind-refresh.go.html",
+		templateDir+"/header.go.html",
+		templateDir+"/confirmation.go.html",
+		templateDir+"/footer.go.html",
+	); err != nil {
+		return err
+	} else {
+		s.templates["confirm"] = tmpl
+	}
 
-    // list
-    if tmpl, err := template.ParseFS(templatesFS,
-        templateDir+"/tailwind.go.html",
-        templateDir+"/header.go.html",
-        templateDir+"/list.go.html",
-        templateDir+"/footer.go.html",
-    ); err != nil {
-        return err
-    } else { s.templates["list"] = tmpl }
+	// list
+	if tmpl, err := template.ParseFS(templatesFS,
+		templateDir+"/tailwind.go.html",
+		templateDir+"/header.go.html",
+		templateDir+"/list.go.html",
+		templateDir+"/footer.go.html",
+	); err != nil {
+		return err
+	} else {
+		s.templates["list"] = tmpl
+	}
 
-    // new visitor
-    if tmpl, err := template.ParseFS(templatesFS,
-        templateDir+"/tailwind.go.html",
-        templateDir+"/header.go.html",
-        templateDir+"/new.go.html",
-        templateDir+"/footer.go.html",
-    ); err != nil {
-        return err
-    } else { s.templates["new"] = tmpl }
+	// new visitor
+	if tmpl, err := template.ParseFS(templatesFS,
+		templateDir+"/tailwind.go.html",
+		templateDir+"/header.go.html",
+		templateDir+"/new.go.html",
+		templateDir+"/footer.go.html",
+	); err != nil {
+		return err
+	} else {
+		s.templates["new"] = tmpl
+	}
 
-    // privacy
-    if tmpl, err := template.ParseFS(templatesFS,
-        templateDir+"/tailwind-refresh-timeout.go.html",
-        templateDir+"/header.go.html",
-        templateDir+"/privacy.go.html",
-        templateDir+"/footer.go.html",
-    ); err != nil {
-        return err
-    } else { s.templates["privacy"] = tmpl }
+	// privacy
+	if tmpl, err := template.ParseFS(templatesFS,
+		templateDir+"/tailwind-refresh-timeout.go.html",
+		templateDir+"/header.go.html",
+		templateDir+"/privacy.go.html",
+		templateDir+"/footer.go.html",
+	); err != nil {
+		return err
+	} else {
+		s.templates["privacy"] = tmpl
+	}
 
-    return nil
+	return nil
 }
 
 func (s *Server) run(addr, port string) error {
-    staticSub, err := fs.Sub(staticFS, "static")
-    if err != nil {
-        return err
-    }
+	staticSub, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		return err
+	}
 
-    mux := http.NewServeMux()
-    mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
+	mux := http.NewServeMux()
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
 
-    mux.HandleFunc("/", s.homeHandler)
-    mux.HandleFunc("/new", s.newVisitorHandler)
-    mux.HandleFunc("/confirmation", s.confirmHandler)
-    mux.HandleFunc("/list", s.listHandler)
-    mux.HandleFunc("/morse-audio", s.morseAudioHandler)
-    mux.HandleFunc("/privacy", s.privacyHandler)
-    mux.HandleFunc("/healthz", s.healthHandler)
+	mux.HandleFunc("/", s.homeHandler)
+	mux.HandleFunc("/new", s.newVisitorHandler)
+	mux.HandleFunc("/confirmation", s.confirmHandler)
+	mux.HandleFunc("/list", s.listHandler)
+	mux.HandleFunc("/morse-audio", s.morseAudioHandler)
+	mux.HandleFunc("/privacy", s.privacyHandler)
+	mux.HandleFunc("/healthz", s.healthHandler)
 
-    srv := &http.Server{
-        Addr:              addr + ":" + port,
-        Handler:           mux,
-        ReadHeaderTimeout: 5 * time.Second,
-        ReadTimeout:       10 * time.Second,
-        WriteTimeout:      15 * time.Second,
-        IdleTimeout:       60 * time.Second,
-        MaxHeaderBytes:    1 << 20, // 1MB
-    }
+	srv := &http.Server{
+		Addr:              addr + ":" + port,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1MB
+	}
 
-    log.Println("Listening on " + srv.Addr)
-    return srv.ListenAndServe()
+	log.Println("Listening on " + srv.Addr)
+	return srv.ListenAndServe()
 }
 
 // handlers
 func (s *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
-    tmpl := s.templates["home"]
-    data := map[string]any{"Year": s.year}
-    if err := tmpl.ExecuteTemplate(w, "tailwind-refresh", data); err != nil {
-        http.Error(w, "Template execution error", http.StatusInternalServerError)
-        log.Printf("homeHandler template error: %v", err)
-        return
-    }
+	tmpl := s.templates["home"]
+	data := map[string]any{"Year": s.year}
+	if err := tmpl.ExecuteTemplate(w, "tailwind-refresh", data); err != nil {
+		http.Error(w, "Template execution error", http.StatusInternalServerError)
+		log.Printf("homeHandler template error: %v", err)
+		return
+	}
 }
 
 func (s *Server) confirmHandler(w http.ResponseWriter, r *http.Request) {
-    callsign := r.URL.Query().Get("callsign")
-    name := r.URL.Query().Get("name")
-    data := map[string]any{"Year": s.year, "Callsign": callsign, "Name": name}
-    tmpl := s.templates["confirm"]
-    if err := tmpl.ExecuteTemplate(w, "tailwind-refresh", data); err != nil {
-        http.Error(w, "Template execution error", http.StatusInternalServerError)
-        log.Printf("confirmHandler template error: %v", err)
-        return
-    }
+	callsign := r.URL.Query().Get("callsign")
+	name := r.URL.Query().Get("name")
+	data := map[string]any{"Year": s.year, "Callsign": callsign, "Name": name}
+	tmpl := s.templates["confirm"]
+	if err := tmpl.ExecuteTemplate(w, "tailwind-refresh", data); err != nil {
+		http.Error(w, "Template execution error", http.StatusInternalServerError)
+		log.Printf("confirmHandler template error: %v", err)
+		return
+	}
 }
 
 func (s *Server) listHandler(w http.ResponseWriter, r *http.Request) {
-    visitors, err := s.store.ListVisitors()
-    if err != nil {
-        http.Error(w, "Failed to load visitors", http.StatusInternalServerError)
-        log.Printf("listHandler store error: %v", err)
-        return
-    }
-    data := map[string]any{"Visitors": visitors, "Year": s.year}
-    tmpl := s.templates["list"]
-    if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
-        http.Error(w, "Template execution error", http.StatusInternalServerError)
-        log.Printf("listHandler template error: %v", err)
-        return
-    }
+	visitors, err := s.store.ListVisitors()
+	if err != nil {
+		http.Error(w, "Failed to load visitors", http.StatusInternalServerError)
+		log.Printf("listHandler store error: %v", err)
+		return
+	}
+	data := map[string]any{"Visitors": visitors, "Year": s.year}
+	tmpl := s.templates["list"]
+	if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
+		http.Error(w, "Template execution error", http.StatusInternalServerError)
+		log.Printf("listHandler template error: %v", err)
+		return
+	}
 }
 
 // Morse code is now played in the browser via generated WAV files served by the backend.
 // The morse package's Play method is retained for possible future CLI/desktop use.
 func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        tmpl := s.templates["new"]
-        totalVisitors, err := s.store.TotalVisitors()
-        if err != nil {
-            http.Error(w, "Failed to get totals", http.StatusInternalServerError)
-            log.Printf("newVisitorHandler totals error: %v", err)
-            return
-        }
-        data := map[string]any{"Year": s.year, "CurrentVisitor": totalVisitors + 1}
-        if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
-            http.Error(w, "Template execution error", http.StatusInternalServerError)
-            log.Printf("newVisitorHandler template error: %v", err)
-            return
-        }
-        return
-    }
+	if r.Method != http.MethodPost {
+		tmpl := s.templates["new"]
+		totalVisitors, err := s.store.TotalVisitors()
+		if err != nil {
+			http.Error(w, "Failed to get totals", http.StatusInternalServerError)
+			log.Printf("newVisitorHandler totals error: %v", err)
+			return
+		}
+		data := map[string]any{"Year": s.year, "CurrentVisitor": totalVisitors + 1}
+		if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
+			http.Error(w, "Template execution error", http.StatusInternalServerError)
+			log.Printf("newVisitorHandler template error: %v", err)
+			return
+		}
+		return
+	}
 	// If POST
 	v := visitorstore.Visitor{}
 	if err := r.ParseForm(); err != nil {
@@ -201,119 +212,125 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Form decoding error; please return to the previous page", http.StatusInternalServerError)
 		return
 	}
-    if err := s.store.SaveVisitor(v); err != nil {
-        // Check if it's a validation error
-        if valErr, ok := err.(*visitorstore.ValidationError); ok {
-            // Return HTTP 400 with validation error message
-            w.WriteHeader(http.StatusBadRequest)
-            tmpl := s.templates["new"]
-            totalVisitors, _ := s.store.TotalVisitors()
-            data := map[string]any{
-                "Year":           s.year,
-                "CurrentVisitor": totalVisitors + 1,
-                "Error":          valErr.Error(),
-            }
-            if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
-                http.Error(w, "Template execution error", http.StatusInternalServerError)
-                log.Printf("newVisitorHandler template error: %v", err)
-            }
-            return
-        }
-        // Other errors (database, etc.)
-        http.Error(w, "Visitor saving error; please return to the previous page", http.StatusInternalServerError)
-        log.Printf("newVisitorHandler save error: %v", err)
-        return
-    }
+
+	// Normalize fields (Validate normalizes callsign and email)
+	v.FirstName = strings.TrimSpace(v.FirstName)
+	v.LastName = strings.TrimSpace(v.LastName)
+
+	// Validate fields
+	if err := v.Validate(); err != nil {
+		if valErr, ok := err.(*visitorstore.ValidationError); ok {
+			w.WriteHeader(http.StatusBadRequest)
+			tmpl := s.templates["new"]
+			totalVisitors, _ := s.store.TotalVisitors()
+			data := map[string]any{
+				"Year":           s.year,
+				"CurrentVisitor": totalVisitors + 1,
+				"Error":          valErr.Error(),
+			}
+			if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
+				http.Error(w, "Template execution error", http.StatusInternalServerError)
+				log.Printf("newVisitorHandler template error: %v", err)
+			}
+			return
+		}
+	}
+
+	if err := s.store.SaveVisitor(v); err != nil {
+		http.Error(w, "Visitor saving error; please return to the previous page", http.StatusInternalServerError)
+		log.Printf("newVisitorHandler save error: %v", err)
+		return
+	}
 	msg := v.Callsign
 	if msg != "" {
 		msg = msg + "  73"
 	} else {
 		msg = "73"
 	}
-    http.Redirect(w, r, "/confirmation?callsign="+url.QueryEscape(msg)+"&name="+url.QueryEscape(v.FirstName), http.StatusSeeOther)
+	http.Redirect(w, r, "/confirmation?callsign="+url.QueryEscape(msg)+"&name="+url.QueryEscape(v.FirstName), http.StatusSeeOther)
 }
 
 // Handler to serve Morse code audio as WAV
 func (s *Server) morseAudioHandler(w http.ResponseWriter, r *http.Request) {
-    callsign := r.URL.Query().Get("callsign")
-    if callsign == "" {
-        http.Error(w, "Missing callsign parameter", http.StatusBadRequest)
-        return
-    }
-    audioData, err := morse.GenerateWav(callsign)
-    if err != nil {
-        http.Error(w, "Failed to generate audio", http.StatusInternalServerError)
-        log.Printf("morseAudioHandler error: %v", err)
-        return
-    }
-    w.Header().Set("Content-Type", "audio/wav")
-    w.Header().Set("Content-Disposition", "inline; filename=\"morse.wav\"")
-    w.Write(audioData)
+	callsign := r.URL.Query().Get("callsign")
+	if callsign == "" {
+		http.Error(w, "Missing callsign parameter", http.StatusBadRequest)
+		return
+	}
+	audioData, err := morse.GenerateWav(callsign)
+	if err != nil {
+		http.Error(w, "Failed to generate audio", http.StatusInternalServerError)
+		log.Printf("morseAudioHandler error: %v", err)
+		return
+	}
+	w.Header().Set("Content-Type", "audio/wav")
+	w.Header().Set("Content-Disposition", "inline; filename=\"morse.wav\"")
+	w.Write(audioData)
 }
 
 func (s *Server) privacyHandler(w http.ResponseWriter, r *http.Request) {
-    data := map[string]any{"Year": s.year}
-    tmpl := s.templates["privacy"]
-    if err := tmpl.ExecuteTemplate(w, "tailwind-refresh-timeout", data); err != nil {
-        http.Error(w, "Template execution error", http.StatusInternalServerError)
-        log.Printf("privacyHandler template error: %v", err)
-        return
-    }
+	data := map[string]any{"Year": s.year}
+	tmpl := s.templates["privacy"]
+	if err := tmpl.ExecuteTemplate(w, "tailwind-refresh-timeout", data); err != nil {
+		http.Error(w, "Template execution error", http.StatusInternalServerError)
+		log.Printf("privacyHandler template error: %v", err)
+		return
+	}
 }
 
 // healthHandler returns 200 and checks DB connectivity
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-    if err := s.store.HealthCheck(); err != nil {
-        http.Error(w, "db not ready", http.StatusServiceUnavailable)
-        return
-    }
-    w.WriteHeader(http.StatusOK)
-    _, _ = w.Write([]byte("ok"))
+	if err := s.store.HealthCheck(); err != nil {
+		http.Error(w, "db not ready", http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("ok"))
 }
 
 func main() {
-    var (
-        flagDB   string
-        flagPort string
-        flagAddr string
-        flagYear string
-    )
+	var (
+		flagDB   string
+		flagPort string
+		flagAddr string
+		flagYear string
+	)
 
-    // Defaults can be overridden by environment variables
-    flagDB = os.Getenv("FD_DB")
-    if flagDB == "" && len(os.Args) > 1 {
-        // Backward compatibility: first positional arg is DB file
-        flagDB = os.Args[1]
-    }
-    flagPort = os.Getenv("FD_PORT")
-    if flagPort == "" {
-        flagPort = defaultPort
-    }
-    flagAddr = os.Getenv("FD_ADDR")
-    if flagAddr == "" {
-        flagAddr = "0.0.0.0"
-    }
-    flagYear = os.Getenv("FD_YEAR")
-    if flagYear == "" {
-        flagYear = thisYear
-    }
+	// Defaults can be overridden by environment variables
+	flagDB = os.Getenv("FD_DB")
+	if flagDB == "" && len(os.Args) > 1 {
+		// Backward compatibility: first positional arg is DB file
+		flagDB = os.Args[1]
+	}
+	flagPort = os.Getenv("FD_PORT")
+	if flagPort == "" {
+		flagPort = defaultPort
+	}
+	flagAddr = os.Getenv("FD_ADDR")
+	if flagAddr == "" {
+		flagAddr = "0.0.0.0"
+	}
+	flagYear = os.Getenv("FD_YEAR")
+	if flagYear == "" {
+		flagYear = thisYear
+	}
 
-    pflag.StringVar(&flagDB, "db", flagDB, "Path to SQLite DB file (required)")
-    pflag.StringVar(&flagPort, "port", flagPort, "Port to listen on")
-    pflag.StringVar(&flagAddr, "addr", flagAddr, "Bind address")
-    pflag.StringVar(&flagYear, "year", flagYear, "Event year for templates")
-    pflag.Parse()
+	pflag.StringVar(&flagDB, "db", flagDB, "Path to SQLite DB file (required)")
+	pflag.StringVar(&flagPort, "port", flagPort, "Port to listen on")
+	pflag.StringVar(&flagAddr, "addr", flagAddr, "Bind address")
+	pflag.StringVar(&flagYear, "year", flagYear, "Event year for templates")
+	pflag.Parse()
 
-    if flagDB == "" {
-        log.Fatal("database file not provided: use --db or FD_DB or positional arg")
-    }
+	if flagDB == "" {
+		log.Fatal("database file not provided: use --db or FD_DB or positional arg")
+	}
 
-    server, err := NewServer(flagDB, flagYear)
-    if err != nil {
-        log.Fatal(err)
-    }
+	server, err := NewServer(flagDB, flagYear)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    if err := server.run(flagAddr, flagPort); err != nil {
-        log.Fatal(err)
-    }
+	if err := server.run(flagAddr, flagPort); err != nil {
+		log.Fatal(err)
+	}
 }
