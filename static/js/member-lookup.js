@@ -11,11 +11,15 @@
             .then(function (data) {
                 if (!data || !data.first_name) return;
 
-                document.getElementById("firstname").value = data.first_name;
-                document.getElementById("lastname").value = data.last_name || "";
-                document.getElementById("email").value = data.email || "";
+                var firstname = document.getElementById("firstname");
+                var lastname = document.getElementById("lastname");
+                var email = document.getElementById("email");
+
+                if (firstname.value === "") firstname.value = data.first_name;
+                if (lastname.value === "") lastname.value = data.last_name || "";
+                if (email.value === "") email.value = data.email || "";
                 document.getElementById("nfarl").checked = true;
             })
-            .catch(function () {});
+            .catch(function (err) { console.warn("member lookup failed:", err); });
     });
 })();

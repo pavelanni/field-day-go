@@ -3,6 +3,7 @@ package memberlookup
 import (
 	"encoding/csv"
 	"errors"
+	"io"
 	"os"
 	"strings"
 )
@@ -27,7 +28,7 @@ func LoadCSV(path string) (*Lookup, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	r := csv.NewReader(f)
 	r.TrimLeadingSpace = true
@@ -59,7 +60,10 @@ func LoadCSV(path string) (*Lookup, error) {
 	for {
 		record, err := r.Read()
 		if err != nil {
-			break
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, err
 		}
 		if len(record) <= maxIdx {
 			continue
