@@ -33,4 +33,7 @@ user:
 	sudo cp deploy/autostart  ~nfarl/.config/lxsession/LXDE-pi/
 	sudo chown -R nfarl:nfarl ~nfarl/.config
 
+css:
+	npx tailwindcss -i input.css -o static/css/tailwind.css
+
 all: build install user start

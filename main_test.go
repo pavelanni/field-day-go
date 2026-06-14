@@ -98,6 +98,9 @@ func TestNewVisitorHandler_GET(t *testing.T) {
 	if !strings.Contains(body, "Field Day 2026") {
 		t.Errorf("newVisitorHandler GET should contain 'Field Day 2026', got: %s", body)
 	}
+	if !strings.Contains(body, "visitors so far in") {
+		t.Errorf("newVisitorHandler GET should contain visitor count display")
+	}
 }
 
 func TestNewVisitorHandler_POST(t *testing.T) {
