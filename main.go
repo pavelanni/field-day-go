@@ -210,7 +210,7 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("newVisitorHandler totals error: %v", err)
 			return
 		}
-		data := map[string]any{"Year": s.year, "CurrentVisitor": totalVisitors + 1}
+		data := map[string]any{"Year": s.year, "CurrentVisitor": totalVisitors + 1, "TotalVisitors": totalVisitors}
 		if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {
 			http.Error(w, "Template execution error", http.StatusInternalServerError)
 			log.Printf("newVisitorHandler template error: %v", err)
@@ -243,6 +243,7 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 			data := map[string]any{
 				"Year":           s.year,
 				"CurrentVisitor": totalVisitors + 1,
+				"TotalVisitors":  totalVisitors,
 				"Error":          valErr.Error(),
 			}
 			if err := tmpl.ExecuteTemplate(w, "tailwind", data); err != nil {

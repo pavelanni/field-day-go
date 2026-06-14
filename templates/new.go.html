@@ -1,127 +1,257 @@
 {{define "content"}}
 <div class="flex flex-col md:flex-row gap-6 mt-6">
-    <div class="md:basis-3/4 w-full">
+    <div class="md:basis-1/2 w-full">
         <div class="flex items-center gap-4 mb-2">
-            <img src="/static/nfarlLogoTransparentBackground_medium.gif" alt="NFARL Logo" class="h-12 w-auto">
-            <h2 class="text-2xl font-bold">Welcome to NFARL Field Day {{.Year}}!</h2>
+            <img
+                src="/static/nfarlLogoTransparentBackground_medium.gif"
+                alt="NFARL Logo"
+                class="h-12 w-auto"
+            />
+            <h2 class="text-2xl font-bold">
+                Welcome to NFARL Field Day {{.Year}}!
+            </h2>
         </div>
-        <h4 class="text-lg font-semibold mb-2">Field Day Map</h4>
-        <img src="/static/NFARL_FD_{{.Year}}.png" class="w-full rounded border mb-4" alt="Field Day Map {{.Year}}">
+        <img
+            src="/static/NFARL_FD_{{.Year}}.png"
+            class="max-h-[650px] rounded-lg shadow-lg mb-4 mx-auto"
+            alt="Field Day Map {{.Year}}"
+        />
     </div>
-    <div class="md:basis-1/4 w-full flex flex-col items-stretch">
+    <div class="md:basis-1/4 w-full flex flex-col">
         <div class="rounded-lg shadow bg-white overflow-hidden mb-4">
-            <h3 class="text-lg font-semibold p-4 bg-gray-50">Total Visitors By Year</h3>
+            <h3 class="text-lg font-semibold p-4 bg-gray-50">
+                Total Visitors By Year
+            </h3>
             <table class="min-w-full text-sm">
                 <tbody>
                     <tr class="even:bg-gray-50 hover:bg-blue-50">
                         <td class="px-4 py-2 border-b border-gray-200">2021</td>
-                        <td class="px-4 py-2 border-b border-gray-200"><b>141</b> (#2 nationwide)</td>
+                        <td class="px-4 py-2 border-b border-gray-200">
+                            <b>141</b> (#2 nationwide)
+                        </td>
                     </tr>
                     <tr class="even:bg-gray-50 hover:bg-blue-50">
                         <td class="px-4 py-2 border-b border-gray-200">2022</td>
-                        <td class="px-4 py-2 border-b border-gray-200"><b>111</b> (#4 nationwide)</td>
+                        <td class="px-4 py-2 border-b border-gray-200">
+                            <b>111</b> (#4 nationwide)
+                        </td>
                     </tr>
                     <tr class="even:bg-gray-50 hover:bg-blue-50">
                         <td class="px-4 py-2 border-b border-gray-200">2023</td>
-                        <td class="px-4 py-2 border-b border-gray-200"><b>132</b> (#3 nationwide)</td>
+                        <td class="px-4 py-2 border-b border-gray-200">
+                            <b>132</b> (#3 nationwide)
+                        </td>
                     </tr>
                     <tr class="even:bg-gray-50 hover:bg-blue-50">
-                        <td class="px-4 py-2">2024</td>
-                        <td class="px-4 py-2"><b>96</b> (#11 nationwide)</td>
+                        <td class="px-4 py-2 border-b border-gray-200">2024</td>
+                        <td class="px-4 py-2 border-b border-gray-200">
+                            <b>96</b> (#11 nationwide)
+                        </td>
+                    </tr>
+                    <tr class="even:bg-gray-50 hover:bg-blue-50">
+                        <td class="px-4 py-2">2025</td>
+                        <td class="px-4 py-2"><b>114</b> (#7 nationwide)</td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <h3 class="text-md font-semibold mb-2">Let's get to the top again!</h3>
-        <h4 class="text-md font-semibold mb-2">New visitor #{{.CurrentVisitor}}:</h4>
+        <div class="flex-1 flex flex-col items-center justify-center">
+            <p class="text-8xl font-bold text-orange-500">{{.TotalVisitors}}</p>
+            <p class="text-lg font-semibold text-gray-600 mt-2">visitors so far in {{.Year}}</p>
+        </div>
+    </div>
+    <div class="md:basis-1/4 w-full flex flex-col items-stretch">
+        <h4 class="text-md font-semibold mb-2">
+            New visitor #{{.CurrentVisitor}}:
+        </h4>
         {{template "signupForm" .}}
     </div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
     <div>
         <h4 class="font-semibold mb-1">Morse Code (CW) and Digital Station</h4>
-        <p class="mb-4">This station is located at the North-East corner of the parking lot.
-            The station is working using Morse Code mode (a.k.a. CW) and Digital modes.
-            CW/Digital Station captain is <b>Carl WB4ABY</b>.
-            Please contact him if you have any questions.</p>
+        <p class="mb-4">
+            This station is located at the North end of the upper parking lot.
+            The station is working using Morse Code mode (a.k.a. CW) and Digital
+            modes. You may listen to the exchange, but please don't disturb the
+            operators. Station captain is <b>Carl WB4ABY</b>.
+        </p>
         <h4 class="font-semibold mb-1">Phone Station (SSB)</h4>
-        <p class="mb-4">This station is located at the south-west corner of the park, near the lower soccer field.
-            It mostly uses Phone mode (a.k.a. SSB or single-side band) but may occasionally use Digital modes.
-            The station captains are <b>Mark WA1NIP</b> and <b>Dave KO4USA</b>.</p>
+        <p class="mb-4">
+            This station is located in an RV near Pavilion #2 outside the
+            South-West corner of the upper soccer field. It mostly uses Phone
+            mode (a.k.a. SSB or single-side band) but may occasionally use
+            Digital modes. Station captains are <b>Mark WA1NIP</b> and
+            <b>David KO4USA</b>.
+        </p>
     </div>
     <div>
         <h4 class="font-semibold mb-1">Satellite Station</h4>
-        <p class="mb-4">This station is located at the West side of the middle of the parking lot.
-            It uses Amateur Radio satellites for contacts.
-            You can watch the map and see when the next satellite will pass our location.
-            Station captains are <b>Daryl K4RGK</b> and <b>Scott KB4KBS</b>.
-            Please contact them if you have any questions.</p>
-        <h4 class="font-semibold mb-1">6-meter Station</h4>
-        <p class="mb-4">This station is located at the tent next to the CW station.
-            It uses the VHF bands, including "the magic band" i.e., the 6-meter band.
-            It also uses other bands above 50MHz.
-            This station operates at frequencies not in use by the three main transmitters and satellite stations.
-            The station captain is <b>Robert AJ4RJ</b>.</p>
+        <p class="mb-4">
+            This station is located at the West side of the middle of the
+            parking lot. It uses Amateur Radio satellites for contacts — the
+            same equipment used for ARISS contacts between the ISS and schools.
+            You can watch the map and see when the next satellite will pass our
+            location. Station captains are <b>Daryl K4RGK</b> and
+            <b>Scott KB4KBS</b>.
+        </p>
+        <h4 class="font-semibold mb-1">VHF Station (North Fulton ARES)</h4>
+        <p class="mb-4">
+            This station is located in a small tent in the upper parking lot.
+            It uses the VHF bands, including "the magic band" i.e., the 6-meter
+            band, and other bands above 50MHz. This station operates at
+            frequencies not in use by the three main transmitters and satellite
+            station. Station captain is <b>Bill N4BTB</b>.
+        </p>
     </div>
     <div>
         <h4 class="font-semibold mb-1">GOTA (Get On The Air) Station</h4>
-        <p>The GOTA station is located behind the Main picnic pavilion, on the East side of the upper soccer field.
-            GOTA stations may operate on any Field Day band, HF or VHF, and are limited to one GOTA station transmitted signal at any time.
-            The GOTA station may be operated by any person licensed since the previous year's Field Day, regardless of license class.
-            It may also be operated by a generally inactive licensee.
-            Non-licensed persons may participate under the direct supervision of an appropriate control operator.
-            <b>Bill N4BTB</b> is the station captain.
-            Please feel free to direct your questions to him or the Coach/Control Operator on duty.</p>
+        <p>
+            The GOTA station is located behind the North end goal of the upper
+            soccer field, near the picnic pavilion and behind the playground.
+            The GOTA station may be operated by any person licensed since the
+            previous year's Field Day, regardless of license class, or by a
+            generally inactive licensee. Non-licensed persons may participate
+            under the direct supervision of a control operator.
+            Station captain is <b>Fred W4FRA</b>.
+        </p>
     </div>
 </div>
-{{end}}
-
-{{define "signupForm"}}
-<form action="new" method="POST" class="space-y-2 bg-gray-50 p-4 rounded shadow text-base" id="signup-form">
+{{end}} {{define "signupForm"}}
+<form
+    action="new"
+    method="POST"
+    class="space-y-2 bg-gray-50 p-4 rounded shadow text-base"
+    id="signup-form"
+>
     {{if .Error}}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+    <div
+        class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+        role="alert"
+    >
         <strong class="font-bold">Validation Error:</strong>
         <span class="block sm:inline">{{.Error}}</span>
     </div>
     {{end}}
     <div>
-        <label for="callsign" class="block font-semibold mb-1">Call sign (if licensed)</label>
-        <input type="text" name="callsign" id="callsign" placeholder="Call sign" class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" autocomplete="off">
+        <label for="callsign" class="block font-semibold mb-1"
+            >Call sign (if licensed)</label
+        >
+        <input
+            type="text"
+            name="callsign"
+            id="callsign"
+            placeholder="Call sign"
+            class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            autocomplete="off"
+        />
     </div>
     <div>
-        <label for="firstname" class="block font-semibold mb-1">First name (required)</label>
-        <input type="text" name="firstname" id="firstname" placeholder="First name (required)" required class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <label for="firstname" class="block font-semibold mb-1"
+            >First name (required)</label
+        >
+        <input
+            type="text"
+            name="firstname"
+            id="firstname"
+            placeholder="First name (required)"
+            required
+            class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
     </div>
     <div>
-        <label for="lastname" class="block font-semibold mb-1">Last name (optional)</label>
-        <input type="text" name="lastname" id="lastname" placeholder="Last name" class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <label for="lastname" class="block font-semibold mb-1"
+            >Last name (optional)</label
+        >
+        <input
+            type="text"
+            name="lastname"
+            id="lastname"
+            placeholder="Last name"
+            class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
     </div>
     <div>
-        <label for="email" class="block font-semibold mb-1">Email address (if you want to be contacted)</label>
-        <input type="email" name="email" id="email" placeholder="Email" class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <label for="email" class="block font-semibold mb-1"
+            >Email address (if you want to be contacted)</label
+        >
+        <input
+            type="email"
+            name="email"
+            id="email"
+            placeholder="Email"
+            class="w-full border rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
     </div>
     <div class="space-y-1 mt-1">
         <div class="flex items-center gap-2">
-            <input type="checkbox" name="nfarl" id="nfarl" class="h-5 w-5 mr-2 align-middle">
-            <label for="nfarl" class="text-gray-800 cursor-pointer select-none align-middle">NFARL member?</label>
+            <input
+                type="checkbox"
+                name="nfarl"
+                id="nfarl"
+                class="h-5 w-5 mr-2 align-middle"
+            />
+            <label
+                for="nfarl"
+                class="text-gray-800 cursor-pointer select-none align-middle"
+                >NFARL member?</label
+            >
         </div>
         <div class="flex items-center gap-2">
-            <input type="checkbox" name="contactme" id="contactme" class="h-5 w-5 mr-2 align-middle">
-            <label for="contactme" class="text-gray-800 cursor-pointer select-none align-middle">May we contact you?</label>
+            <input
+                type="checkbox"
+                name="contactme"
+                id="contactme"
+                class="h-5 w-5 mr-2 align-middle"
+            />
+            <label
+                for="contactme"
+                class="text-gray-800 cursor-pointer select-none align-middle"
+                >May we contact you?</label
+            >
         </div>
         <div class="flex items-center gap-2">
-            <input type="checkbox" name="youth" id="youth" class="h-5 w-5 mr-2 align-middle">
-            <label for="youth" class="text-gray-800 cursor-pointer select-none align-middle">Younger than 18?</label>
+            <input
+                type="checkbox"
+                name="youth"
+                id="youth"
+                class="h-5 w-5 mr-2 align-middle"
+            />
+            <label
+                for="youth"
+                class="text-gray-800 cursor-pointer select-none align-middle"
+                >Younger than 18?</label
+            >
         </div>
         <div class="flex items-center gap-2">
-            <input type="checkbox" name="firsttime" id="firsttime" class="h-5 w-5 mr-2 align-middle">
-            <label for="firsttime" class="text-gray-800 cursor-pointer select-none align-middle">First time at Field Day?</label>
+            <input
+                type="checkbox"
+                name="firsttime"
+                id="firsttime"
+                class="h-5 w-5 mr-2 align-middle"
+            />
+            <label
+                for="firsttime"
+                class="text-gray-800 cursor-pointer select-none align-middle"
+                >First time at Field Day?</label
+            >
         </div>
     </div>
     <div>
-        <p class="text-sm text-gray-600 mt-1">By clicking the Submit button, you agree to the <a href="/privacy" class="underline text-blue-600 hover:text-blue-800">privacy policy</a></p>
+        <p class="text-sm text-gray-600 mt-1">
+            By clicking the Submit button, you agree to the
+            <a
+                href="/privacy"
+                class="underline text-blue-600 hover:text-blue-800"
+                >privacy policy</a
+            >
+        </p>
     </div>
-    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-1.5 px-3 rounded text-base hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+    <button
+        type="submit"
+        class="w-full bg-blue-600 text-white font-bold py-1.5 px-3 rounded text-base hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    >
         Submit
     </button>
 </form>
