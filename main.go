@@ -144,6 +144,7 @@ func (s *Server) run(addr, port string) error {
 	mux.HandleFunc("/morse-audio", s.morseAudioHandler)
 	mux.HandleFunc("/privacy", s.privacyHandler)
 	mux.HandleFunc("/healthz", s.healthHandler)
+	mux.HandleFunc("/api/visitor-count", s.visitorCountHandler)
 	mux.HandleFunc("/member-lookup", s.memberLookupHandler)
 
 	srv := &http.Server{
@@ -307,6 +308,19 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("ok"))
+}
+
+func (s *Server) visitorCountHandler(w http.ResponseWriter, r *http.Request) {
+	count, err := s.store.TotalVisitors()
+	if err != nil {
+		http.Error(w, "failed to get visitor count", http.StatusInternalServerError)
+		log.Printf("visitorCountHandler error: %v", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]any{"year": s.year, "count": count}); err != nil {
+		log.Printf("visitorCountHandler encode error: %v", err)
+	}
 }
 
 func (s *Server) memberLookupHandler(w http.ResponseWriter, r *http.Request) {

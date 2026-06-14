@@ -298,6 +298,45 @@ func TestPrivacyHandler(t *testing.T) {
 	}
 }
 
+func TestVisitorCountHandler(t *testing.T) {
+	dbFile := "test_visitor_count.db"
+	defer os.Remove(dbFile)
+	server, err := NewServer(dbFile, "", thisYear)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.store.Close()
+
+	req, err := http.NewRequest("GET", "/api/visitor-count", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.visitorCountHandler)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("visitorCountHandler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	contentType := rr.Header().Get("Content-Type")
+	if contentType != "application/json" {
+		t.Errorf("visitorCountHandler should return application/json, got: %s", contentType)
+	}
+
+	var resp map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to parse JSON response: %v", err)
+	}
+	if resp["year"] != thisYear {
+		t.Errorf("expected year %q, got %v", thisYear, resp["year"])
+	}
+	if resp["count"] != float64(0) {
+		t.Errorf("expected count 0 for empty DB, got %v", resp["count"])
+	}
+}
+
 func TestMemberLookupHandler(t *testing.T) {
 	tests := []struct {
 		name        string
