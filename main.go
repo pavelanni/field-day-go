@@ -239,7 +239,10 @@ func (s *Server) newVisitorHandler(w http.ResponseWriter, r *http.Request) {
 		if valErr, ok := err.(*visitorstore.ValidationError); ok {
 			w.WriteHeader(http.StatusBadRequest)
 			tmpl := s.templates["new"]
-			totalVisitors, _ := s.store.TotalVisitors()
+			totalVisitors, err := s.store.TotalVisitors()
+			if err != nil {
+				log.Printf("newVisitorHandler totals error on validation re-render: %v", err)
+			}
 			data := map[string]any{
 				"Year":           s.year,
 				"CurrentVisitor": totalVisitors + 1,
