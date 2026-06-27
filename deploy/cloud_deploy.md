@@ -124,6 +124,12 @@ Check logs: `sudo journalctl -u fieldday -f`
 
 ## 8. (Optional) Snapshot to Save Costs
 
+- **Before shutting down**, copy the database to your local machine:
+
+  ```sh
+  scp root@<SERVER_IP>:/var/lib/fieldday/fd2026.db .
+  ```
+
 - **Shut down:** `sudo shutdown now`
 - Take a snapshot in your cloud provider's dashboard.
 - Delete the instance to stop billing (snapshot storage is cheap).
