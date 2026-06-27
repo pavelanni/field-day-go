@@ -8,7 +8,7 @@ Documentation=https://github.com/pavelanni/field-day-go
 User=nfarl
 Group=nfarl
 Type=simple
-ExecStart=/opt/fieldday/fieldday /var/lib/fieldday/fd2025.db
+ExecStart=/opt/fieldday/fieldday --db /var/lib/fieldday/fd2026.db --members /var/lib/fieldday/members-2026.csv --year 2026
 Restart=on-abort
 
 [Install]
