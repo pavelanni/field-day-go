@@ -2,135 +2,158 @@
 
 ## 1. Prepare Your Cloud Instance
 
-- **Create a DigitalOcean droplet** (Fedora 41 recommended).
-- **Update system:**
+- **Create a cloud instance** (Hetzner, DigitalOcean, etc.) with Fedora 44+.
+- **Install required packages:**
 
   ```sh
-  sudo dnf update
+  sudo dnf install -y nginx firewalld
   ```
 
-## 2. Install Required Software
+## 2. Build and Upload the Application
 
-- **NGINX:**
+- **Build the binary** (from your local machine):
 
   ```sh
-  sudo dnf install nginx
-  sudo systemctl enable --now nginx
+  GOOS=linux GOARCH=amd64 go build -o fieldday main.go
   ```
 
-- **Your Application:**
-  - Deploy your app to run on `localhost:3000` (use `systemd`, `pm2`, or Docker as needed).
-
-## 3. Configure NGINX
-
-- **Copy your NGINX config** (e.g., `pavelanni.dev.conf`) to `/etc/nginx/conf.d/`.
-- **Remove default config** (optional):
+- **Create service user and directories** on the server:
 
   ```sh
-  sudo rm /etc/nginx/conf.d/default.conf
+  sudo useradd -r -s /sbin/nologin nfarl
+  sudo mkdir -p /opt/fieldday /var/lib/fieldday
+  sudo chown -R nfarl:nfarl /opt/fieldday /var/lib/fieldday
   ```
 
-- **Test and reload:**
+- **Upload files** (from your local machine):
 
   ```sh
-  sudo nginx -t
-  sudo systemctl reload nginx
+  scp fieldday root@<SERVER_IP>:/opt/fieldday/fieldday
+  scp members-2026.csv root@<SERVER_IP>:/var/lib/fieldday/
+  scp deploy/pavelanni.dev.conf root@<SERVER_IP>:/etc/nginx/conf.d/
+  scp deploy/fieldday.service root@<SERVER_IP>:/etc/systemd/system/
   ```
-
-## 4. Set Up SSL with Cloudflare Origin Certificate
-
-- **In Cloudflare dashboard:**
-  Go to SSL/TLS → Origin Server → Create Certificate.
-- **On your server:**
-
-  ```sh
-  sudo mkdir -p /etc/nginx/ssl
-  sudo vim /etc/nginx/ssl/fullchain.pem
-  sudo vim /etc/nginx/ssl/privkey.pem
-  ```
-
-  Paste the certificate and key.
 
 - **Set permissions:**
 
   ```sh
+  sudo chmod +x /opt/fieldday/fieldday
+  sudo chown nfarl:nfarl /opt/fieldday/fieldday /var/lib/fieldday/members-2026.csv
+  ```
+
+## 3. Set Up SSL with Cloudflare Origin Certificate
+
+The `pavelanni.dev` zone uses **Full (Strict)** SSL mode, so the
+origin server needs a valid certificate. Cloudflare Origin
+Certificates work for this — they're trusted by Cloudflare's edge
+and last up to 15 years.
+
+- **Create an Origin Certificate** (if you don't have one):
+  In Cloudflare → SSL/TLS → Origin Server → Create Certificate.
+  Use the wildcard `*.pavelanni.dev` so it covers all subdomains.
+
+- **Install on the server:**
+
+  ```sh
+  sudo mkdir -p /etc/nginx/ssl
+  sudo vim /etc/nginx/ssl/fullchain.pem   # paste the certificate
+  sudo vim /etc/nginx/ssl/privkey.pem     # paste the private key
   sudo chmod 600 /etc/nginx/ssl/privkey.pem
   sudo chown root:root /etc/nginx/ssl/privkey.pem
   ```
 
-## 5. SELinux Configuration (Fedora)
+  **Save the private key** — Cloudflare only shows it once.
 
-- **Allow NGINX to connect to your app:**
+## 4. Configure NGINX
+
+The included `pavelanni.dev.conf` handles both HTTP (port 80) and
+HTTPS (port 443) with the Origin Certificate, proxying to the app
+on localhost:3000.
+
+- **Remove default config** (optional):
 
   ```sh
-  sudo setsebool -P httpd_can_network_connect 1
+  sudo rm -f /etc/nginx/conf.d/default.conf
   ```
 
-## 6. Enable and Configure firewalld
-
-- **Install and start:**
+- **Test and enable:**
 
   ```sh
-  sudo dnf install firewalld
+  sudo nginx -t
+  sudo systemctl enable --now nginx
+  ```
+
+## 5. Configure Firewall and SELinux
+
+- **Firewall** (allow only HTTP/HTTPS):
+
+  ```sh
   sudo systemctl enable --now firewalld
-  ```
-
-- **Allow only HTTP/HTTPS:**
-  ```sh
   sudo firewall-cmd --permanent --add-service=http
   sudo firewall-cmd --permanent --add-service=https
   sudo firewall-cmd --reload
   ```
 
+- **SELinux** (allow NGINX to proxy):
+
+  ```sh
+  sudo setsebool -P httpd_can_network_connect 1
+  ```
+
 - **Verify port 3000 is closed externally:**
 
   ```sh
-  curl http://your-server-ip:3000
-  nmap -p 3000 your-server-ip
+  curl --connect-timeout 5 http://<SERVER_IP>:3000
   ```
 
-## 7. Cloudflare DNS and Proxy
+## 6. Start the Application
 
-- **Set an A record** for your domain (e.g., `fieldday.pavelanni.dev`) to your droplet’s IP.
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now fieldday
+```
+
+Check logs: `sudo journalctl -u fieldday -f`
+
+## 7. Cloudflare DNS
+
+- **Set an A record** for `fieldday.pavelanni.dev` pointing to your
+  server's IP.
 - **Enable the orange cloud** (proxy) in Cloudflare.
-- **Set SSL/TLS mode** to **Full (strict)**.
+- SSL/TLS mode should remain **Full (Strict)** (zone-wide setting).
 
-## 8. (Optional) Take a Snapshot to Save Costs
+## 8. (Optional) Snapshot to Save Costs
 
-- **Shut down your droplet:**
+- **Before shutting down**, copy the database to your local machine:
 
   ```sh
-  sudo shutdown now
+  scp root@<SERVER_IP>:/var/lib/fieldday/fd2026.db .
   ```
 
-- **In DigitalOcean dashboard:**
-  Go to Droplet → Snapshots → Take Snapshot.
-- **Delete the droplet** to stop billing for compute (you’ll only pay for snapshot storage).
-- **Restore from snapshot** before Field Day.
-
-## 9. After Restoring from Snapshot
-
-- **Update DNS** if your droplet’s IP changes.
-- **Test your app and NGINX.**
+- **Shut down:** `sudo shutdown now`
+- Take a snapshot in your cloud provider's dashboard.
+- Delete the instance to stop billing (snapshot storage is cheap).
+- Restore from snapshot before Field Day.
+- **After restoring:** update the DNS A record if the IP changes.
 
 ---
 
-## Troubleshooting
+## Updating for a New Year
 
-- **Permission denied connecting to upstream:**
-  Run: `sudo setsebool -P httpd_can_network_connect 1`
-- **Port 3000 accessible from outside:**
-  Check `firewalld` rules and ensure only HTTP/HTTPS are open.
-
----
+1. Update `deploy/fieldday.service`: change the database filename
+   (e.g., `fd2026.db` → `fd2027.db`) and members CSV path.
+2. Rebuild and re-upload the binary.
+3. Upload the new members CSV.
+4. Restart: `sudo systemctl restart fieldday`
+5. The Origin Certificate (`*.pavelanni.dev`) is valid until 2041 —
+   no need to reissue.
 
 ## Useful Commands
 
-- **Check NGINX status:**
-  `sudo systemctl status nginx`
-- **Check firewall rules:**
-  `sudo firewall-cmd --list-all`
-- **Check SELinux status:**
-  `sestatus`
-
----
+| Task | Command |
+|---|---|
+| App logs | `journalctl -u fieldday -f` |
+| NGINX status | `systemctl status nginx` |
+| Firewall rules | `firewall-cmd --list-all` |
+| SELinux status | `sestatus` |
+| Restart app | `systemctl restart fieldday` |
